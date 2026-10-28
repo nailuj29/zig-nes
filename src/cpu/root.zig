@@ -24,7 +24,7 @@ pub const CPU = struct {
     }
 };
 
-test "CPU init doesn't fail" {
+test "CPU init/deinit doesn't fail" {
     const cpu = try CPU.init(std.testing.allocator);
     defer cpu.deinit(std.testing.allocator);
 }

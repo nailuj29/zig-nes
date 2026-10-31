@@ -69,6 +69,12 @@ pub const CPU = struct {
         self.ram[addr] = @truncate(word & 0xff);
         self.ram[addr + 1] = @truncate(word >> 8);
     }
+
+    /// Advances the program counter, returning the previous value it pointed to
+    fn advance(self: *CPU) u8 {
+        self.pc += 1;
+        return self.ram[self.pc - 1];
+    }
 };
 
 test "CPU init/deinit doesn't fail" {
@@ -120,4 +126,22 @@ test "Loading code" {
     try expectEqual(0xa9, cpu.readByte(0x2000));
     try expectEqual(0x42, cpu.readByte(0x2001));
     try expectEqual(0x2000, cpu.readWord(0xfffc));
+}
+
+test "Program counter advances" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA9, 0x42, // LDA #42
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    try expectEqual(0xa9, cpu.advance());
+    try expectEqual(0x42, cpu.advance());
 }

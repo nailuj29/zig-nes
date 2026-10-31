@@ -3,6 +3,18 @@ const Allocator = std.mem.Allocator;
 
 const CPUError = error{IllegalAccess};
 
+const AddressMode = enum {
+    Immediate,
+    Absolute,
+    ZeroPage,
+    IndexedAbsoluteX,
+    IndexedAbsoluteY,
+    IndexedZeroPageY,
+    IndexedZeroPageX,
+    PreIndexedIndirect,
+    PostIndexedIndirect,
+};
+
 pub const CPU = struct {
     ram: []u8 = &.{},
     a: u8 = 0,
@@ -49,7 +61,7 @@ pub const CPU = struct {
     }
 
     /// Loads some code into memory at a specified address, and prepares the CPU to execute said code
-    fn load_code(self: CPU, addr: u16, code: []u8) CPUError!void {
+    pub fn load_code(self: CPU, addr: u16, code: []u8) CPUError!void {
         if (addr + code.len > 0xfffc) { // FFFC is reserved for address of code. Will add more to this eventually
             return error.IllegalAccess;
         }

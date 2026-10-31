@@ -38,34 +38,34 @@ pub const CPU = struct {
     }
 
     /// Loads some code into memory at a specified address, and prepares the CPU to execute said code
-    pub fn load_code(self: CPU, addr: u16, code: []u8) CPUError!void {
+    pub fn loadCode(self: CPU, addr: u16, code: []u8) CPUError!void {
         if (addr + code.len > 0xfffc) { // FFFC is reserved for address of code. Will add more to this eventually
             return error.IllegalAccess;
         }
 
         @memcpy(self.ram[addr .. addr + code.len], code);
-        self.write_word(0xfffc, addr);
+        self.writeWord(0xfffc, addr);
     }
 
     /// Reads a single byte from the CPU's RAM
-    fn read_byte(self: CPU, addr: u16) u8 {
+    fn readByte(self: CPU, addr: u16) u8 {
         return self.ram[addr];
     }
 
     /// Writes a single byte to the CPU's RAM
-    fn write_byte(self: CPU, addr: u16, byte: u8) void {
+    fn writeByte(self: CPU, addr: u16, byte: u8) void {
         self.ram[addr] = byte;
     }
 
     /// Reads a single 16-bit word from the CPU's RAM
-    fn read_word(self: CPU, addr: u16) u16 {
+    fn readWord(self: CPU, addr: u16) u16 {
         const high: u16 = self.ram[addr + 1];
         const low: u16 = self.ram[addr];
         return (high << 8) | low;
     }
 
     /// Writes a single 16-bit word to the CPU's RAM
-    fn write_word(self: CPU, addr: u16, word: u16) void {
+    fn writeWord(self: CPU, addr: u16, word: u16) void {
         self.ram[addr] = @truncate(word & 0xff);
         self.ram[addr + 1] = @truncate(word >> 8);
     }
@@ -83,11 +83,11 @@ test "Read and write bytes" {
     const cpu = try CPU.init(gpa);
     defer cpu.deinit(gpa);
 
-    cpu.write_byte(0x4242, 0x42);
-    cpu.write_byte(0x1234, 0x56);
+    cpu.writeByte(0x4242, 0x42);
+    cpu.writeByte(0x1234, 0x56);
 
-    try expectEqual(0x42, cpu.read_byte(0x4242));
-    try expectEqual(0x56, cpu.read_byte(0x1234));
+    try expectEqual(0x42, cpu.readByte(0x4242));
+    try expectEqual(0x56, cpu.readByte(0x1234));
 }
 
 test "Read and write words" {
@@ -97,11 +97,11 @@ test "Read and write words" {
     const cpu = try CPU.init(gpa);
     defer cpu.deinit(gpa);
 
-    cpu.write_word(0xfffc, 0x3000);
+    cpu.writeWord(0xfffc, 0x3000);
 
-    try expectEqual(0x3000, cpu.read_word(0xfffc));
-    try expectEqual(0x00, cpu.read_byte(0xfffc));
-    try expectEqual(0x30, cpu.read_byte(0xfffd));
+    try expectEqual(0x3000, cpu.readWord(0xfffc));
+    try expectEqual(0x00, cpu.readByte(0xfffc));
+    try expectEqual(0x30, cpu.readByte(0xfffd));
 }
 
 test "Loading code" {
@@ -115,9 +115,9 @@ test "Loading code" {
         0xA9, 0x42, // LDA #42
     };
 
-    try cpu.load_code(0x2000, &code);
+    try cpu.loadCode(0x2000, &code);
 
-    try expectEqual(0xa9, cpu.read_byte(0x2000));
-    try expectEqual(0x42, cpu.read_byte(0x2001));
-    try expectEqual(0x2000, cpu.read_word(0xfffc));
+    try expectEqual(0xa9, cpu.readByte(0x2000));
+    try expectEqual(0x42, cpu.readByte(0x2001));
+    try expectEqual(0x2000, cpu.readWord(0xfffc));
 }

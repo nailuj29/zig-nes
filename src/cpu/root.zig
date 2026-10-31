@@ -86,8 +86,8 @@ test "Read and write bytes" {
     cpu.write_byte(0x4242, 0x42);
     cpu.write_byte(0x1234, 0x56);
 
-    try expectEqual(cpu.read_byte(0x4242), 0x42);
-    try expectEqual(cpu.read_byte(0x1234), 0x56);
+    try expectEqual(0x42, cpu.read_byte(0x4242));
+    try expectEqual(0x56, cpu.read_byte(0x1234));
 }
 
 test "Read and write words" {
@@ -99,9 +99,9 @@ test "Read and write words" {
 
     cpu.write_word(0xfffc, 0x3000);
 
-    try expectEqual(cpu.read_word(0xfffc), 0x3000);
-    try expectEqual(cpu.read_byte(0xfffc), 0x00);
-    try expectEqual(cpu.read_byte(0xfffd), 0x30);
+    try expectEqual(0x3000, cpu.read_word(0xfffc));
+    try expectEqual(0x00, cpu.read_byte(0xfffc));
+    try expectEqual(0x30, cpu.read_byte(0xfffd));
 }
 
 test "Loading code" {
@@ -117,7 +117,7 @@ test "Loading code" {
 
     try cpu.load_code(0x2000, &code);
 
-    try expectEqual(cpu.read_byte(0x2000), 0xa9);
-    try expectEqual(cpu.read_byte(0x2001), 0x42);
-    try expectEqual(cpu.read_word(0xfffc), 0x2000);
+    try expectEqual(0xa9, cpu.read_byte(0x2000));
+    try expectEqual(0x42, cpu.read_byte(0x2001));
+    try expectEqual(0x2000, cpu.read_word(0xfffc));
 }

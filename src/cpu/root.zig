@@ -9,10 +9,10 @@ const AddressMode = enum {
     immediate,
     absolute,
     zero_page,
-    indexed_absolute_x,
-    indexed_absolute_y,
-    indexed_zero_page_y,
-    indexed_zero_page_x,
+    absolute_x,
+    absolute_y,
+    zero_page_x,
+    zero_page_y,
     pre_indexed_indirect,
     post_indexed_indirect,
 };
@@ -76,6 +76,37 @@ pub const CPU = struct {
     fn advance(self: *CPU) u8 {
         self.pc += 1;
         return self.ram[self.pc - 1];
+    }
+
+    /// Advances the program counter 2 bytes, returning the word starting at the previous address
+    fn advanceWord(self: *CPU) u16 {
+        self.pc += 2;
+        return self.readWord(self.pc - 2);
+    }
+
+    /// Returns the operand of the previously read instruction given its mode.
+    /// Will advance the program counter if necessary
+    fn get_operand(self: *CPU, mode: AddressMode) u8 {
+        // TODO: flag crossing of page boundary
+        return switch (mode) {
+            .immediate => self.advance(),
+            .absolute => self.readByte(self.advanceWord()),
+            .zero_page => self.readByte(self.advance()),
+            .absolute_x => self.readByte(self.advanceWord() + self.x),
+            .absolute_y => self.readByte(self.advanceWord() + self.y),
+            .zero_page_x => self.readByte((self.advance() + self.x) & 0xff),
+            .zero_page_y => self.readByte((self.advance() + self.y) & 0xff),
+            .pre_indexed_indirect => blk: {
+                const addr_indirect = (self.advance() + self.x) & 0xff;
+                const addr_actual = self.readWord(addr_indirect);
+                break :blk self.readByte(addr_actual);
+            },
+            .post_indexed_indirect => blk: {
+                const addr_indirect = self.advance();
+                const addr_actual = self.readWord(addr_indirect) + self.y;
+                break :blk self.readByte(addr_actual);
+            },
+        };
     }
 };
 
@@ -146,4 +177,196 @@ test "Program counter advances" {
 
     try expectEqual(0xa9, cpu.advance());
     try expectEqual(0x42, cpu.advance());
+}
+
+test "Immediate addressing mode" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA9, 0x42, // LDA #42
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = cpu.advance(); // Go past instruction
+    try expectEqual(0x42, cpu.get_operand(.immediate));
+}
+
+test "Absolute addressing mode" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xAD, 0x00, 0x42, // LDA $4200
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.writeByte(0x4200, 0xaa); // Write the word to be read as the operand
+
+    _ = cpu.advance(); // Go past instruction
+    try expectEqual(0xaa, cpu.get_operand(.absolute));
+}
+
+test "Zero-page addressing mode" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA5, 0x42, // LDA $42
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.writeByte(0x42, 0xaa);
+
+    _ = cpu.advance(); // Go past instruction
+    try expectEqual(0xaa, cpu.get_operand(.zero_page));
+}
+
+test "Absolute,X addressing mode" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xBD, 0x00, 0x42, // LDA $4200,X
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.x = 0x42;
+
+    cpu.writeByte(0x4242, 0xaa);
+
+    _ = cpu.advance(); // Go past instruction
+    try expectEqual(0xaa, cpu.get_operand(.absolute_x));
+}
+
+test "Absolute,Y addressing mode" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xB9, 0x00, 0x42, // LDA $4200,Y
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.x = 0x42;
+
+    cpu.writeByte(0x4242, 0xaa);
+
+    _ = cpu.advance(); // Go past instruction
+    try expectEqual(0xaa, cpu.get_operand(.absolute_y));
+}
+
+test "Zero-page,X addressing mode" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xB5, 0x42, // LDA $42,X
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.x = 0x42;
+
+    cpu.writeByte(0x84, 0xaa);
+
+    _ = cpu.advance(); // Go past instruction
+    try expectEqual(0xaa, cpu.get_operand(.zero_page_x));
+}
+
+test "Zero-page,Y addressing mode" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xB6, 0x42, // LDX $42,Y
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.y = 0x42;
+
+    cpu.writeByte(0x84, 0xaa);
+
+    _ = cpu.advance(); // Go past instruction
+    try expectEqual(0xaa, cpu.get_operand(.zero_page_x));
+}
+
+test "(Indirect, X) addressing mode" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA1, 0x42, // LDA ($42,X)
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.x = 0x42;
+
+    cpu.writeWord(0x84, 0x4200);
+    cpu.writeByte(0x4200, 0xaa);
+
+    _ = cpu.advance(); // Go past instruction
+    try expectEqual(0xaa, cpu.get_operand(.pre_indexed_indirect));
+}
+
+test "(Indirect),Y addressing mode" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xB1, 0x42, // LDA ($42),Y
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.y = 0x42;
+
+    cpu.writeWord(0x42, 0x4200);
+    cpu.writeByte(0x4242, 0xaa);
+
+    _ = cpu.advance(); // Go past instruction
+    try expectEqual(0xaa, cpu.get_operand(.post_indexed_indirect));
 }

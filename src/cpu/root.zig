@@ -37,6 +37,16 @@ pub const CPU = struct {
         allocator.free(self.ram);
     }
 
+    /// Loads some code into memory at a specified address, and prepares the CPU to execute said code
+    pub fn load_code(self: CPU, addr: u16, code: []u8) CPUError!void {
+        if (addr + code.len > 0xfffc) { // FFFC is reserved for address of code. Will add more to this eventually
+            return error.IllegalAccess;
+        }
+
+        @memcpy(self.ram[addr .. addr + code.len], code);
+        self.write_word(0xfffc, addr);
+    }
+
     /// Reads a single byte from the CPU's RAM
     fn read_byte(self: CPU, addr: u16) u8 {
         return self.ram[addr];
@@ -58,16 +68,6 @@ pub const CPU = struct {
     fn write_word(self: CPU, addr: u16, word: u16) void {
         self.ram[addr] = @truncate(word & 0xff);
         self.ram[addr + 1] = @truncate(word >> 8);
-    }
-
-    /// Loads some code into memory at a specified address, and prepares the CPU to execute said code
-    pub fn load_code(self: CPU, addr: u16, code: []u8) CPUError!void {
-        if (addr + code.len > 0xfffc) { // FFFC is reserved for address of code. Will add more to this eventually
-            return error.IllegalAccess;
-        }
-
-        @memcpy(self.ram[addr .. addr + code.len], code);
-        self.write_word(0xfffc, addr);
     }
 };
 

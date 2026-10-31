@@ -1,6 +1,8 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
+const CPUError = error{IllegalAccess};
+
 pub const CPU = struct {
     ram: []u8 = &.{},
     a: u8 = 0,
@@ -45,6 +47,16 @@ pub const CPU = struct {
         self.ram[addr] = @truncate(word & 0xff);
         self.ram[addr + 1] = @truncate(word >> 8);
     }
+
+    /// Loads some code into memory at a specified address, and prepares the CPU to execute said code
+    fn load_code(self: CPU, addr: u16, code: []u8) CPUError!void {
+        if (addr + code.len > 0xfffc) { // FFFC is reserved for address of code. Will add more to this eventually
+            return error.IllegalAccess;
+        }
+
+        @memcpy(self.ram[addr .. addr + code.len], code);
+        self.write_word(0xfffc, addr);
+    }
 };
 
 test "CPU init/deinit doesn't fail" {
@@ -78,4 +90,22 @@ test "Read and write words" {
     try expectEqual(cpu.read_word(0xfffc), 0x3000);
     try expectEqual(cpu.read_byte(0xfffc), 0x00);
     try expectEqual(cpu.read_byte(0xfffd), 0x30);
+}
+
+test "Loading code" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    const cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA9, 0x42, // LDA #42
+    };
+
+    try cpu.load_code(0x2000, &code);
+
+    try expectEqual(cpu.read_byte(0x2000), 0xa9);
+    try expectEqual(cpu.read_byte(0x2001), 0x42);
+    try expectEqual(cpu.read_word(0xfffc), 0x2000);
 }

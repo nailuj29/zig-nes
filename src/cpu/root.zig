@@ -1,18 +1,20 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const CPUError = error{IllegalAccess};
+const CPUError = error{
+    IllegalAccess,
+};
 
 const AddressMode = enum {
-    Immediate,
-    Absolute,
-    ZeroPage,
-    IndexedAbsoluteX,
-    IndexedAbsoluteY,
-    IndexedZeroPageY,
-    IndexedZeroPageX,
-    PreIndexedIndirect,
-    PostIndexedIndirect,
+    immediate,
+    absolute,
+    zero_page,
+    indexed_absolute_x,
+    indexed_absolute_y,
+    indexed_zero_page_y,
+    indexed_zero_page_x,
+    pre_indexed_indirect,
+    post_indexed_indirect,
 };
 
 pub const CPU = struct {

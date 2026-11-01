@@ -16,13 +16,13 @@ pub const CPU = struct {
     y: u8 = 0,
     pc: u16 = 0,
     s: u8 = 0,
-    p: u6 = 0,
+    p: u8 = 0,
 
     /// Initialize the CPU. Requires an allocator so the CPU struct can reserve 64KB of RAM
     pub fn init(allocator: Allocator) !CPU {
         var cpu: CPU = .{};
         cpu.ram = try allocator.alloc(u8, 65536); // CPU can technically access 64KB, this should be configurable, though.
-
+        cpu.p = 0b00100000; // bit 5 is always set
         return cpu;
     }
 
@@ -42,10 +42,14 @@ pub const CPU = struct {
     }
 
     /// Runs the instruction the program counter points to, advancing as necessary
-    pub fn step(self: *CPU) CPUError!void {
+    pub fn step(self: *CPU) CPUError!u8 {
         const instr = self.advance();
         const meta = instruction_table[instr];
         const operand = self.get_operand(meta.addressing_mode);
+
+        meta.handler(self, operand);
+
+        return meta.cycles;
     }
 
     /// Reads a single byte from the CPU's RAM
@@ -107,6 +111,21 @@ pub const CPU = struct {
                 break :blk self.readByte(addr_actual);
             },
         };
+    }
+
+    /// Updates the negative and zero flags after an instruction is executed
+    pub fn update_nz_flags(self: *CPU, value: u8) void {
+        if (value == 0) {
+            self.p = self.p | 0b00000010;
+        } else {
+            self.p = self.p & 0b11111101;
+        }
+
+        if ((value & (1 << 7)) != 0) { // Negative bit in the integer is set
+            self.p = self.p | 0b10000000;
+        } else {
+            self.p = self.p & 0b01111111;
+        }
     }
 };
 
@@ -369,4 +388,44 @@ test "(Indirect),Y addressing mode" {
 
     _ = cpu.advance(); // Go past instruction
     try expectEqual(0xaa, cpu.get_operand(.post_indexed_indirect));
+}
+
+test "LDA" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+    const expect = std.testing.expect;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA9, 0x42, // LDA #42
+        0xA5, 0x42, // LDA $42
+        0xB5, 0x42, // LDA $42,X
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.writeByte(0x42, 0x80);
+    cpu.writeByte(0x84, 0x00);
+
+    cpu.x = 0x42;
+
+    const cycle_count = cpu.step();
+    try expectEqual(2, cycle_count);
+    try expectEqual(0x2002, cpu.pc);
+    try expectEqual(0x42, cpu.a);
+
+    const cycle_count2 = cpu.step();
+    try expectEqual(3, cycle_count2);
+    try expectEqual(0x2004, cpu.pc);
+    try expectEqual(0x80, cpu.a);
+    try expect(0b10000000 & cpu.p != 0);
+
+    const cycle_count3 = cpu.step();
+    try expectEqual(4, cycle_count3);
+    try expectEqual(0x2006, cpu.pc);
+    try expectEqual(0x00, cpu.a);
+    try expect(0b00000010 & cpu.p != 0);
 }

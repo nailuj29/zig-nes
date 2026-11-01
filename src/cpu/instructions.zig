@@ -28,16 +28,22 @@ fn jam(self: *CPU, op: u8) void {
     while (true) {}
 }
 
+/// Loads a value into the CPU's A register, updating the negative and zero flags if necessary
+fn lda(self: *CPU, op: u8) void {
+    self.a = op;
+    self.update_nz_flags(op);
+}
+
 /// Initializes the table of instruction metadata at comptime
 fn initTable() [256]InstructionMetadata {
-    var table: [256]InstructionMetadata = .{};
+    var table: [256]InstructionMetadata = undefined;
 
     // Set defaults:
     for (&table) |*entry| {
         entry.* = .{
             .mnemonic = "JAM",
             .addressing_mode = .implied,
-            .cycles = -1,
+            .cycles = 255,
             .handler = &jam,
         };
     }
@@ -47,48 +53,56 @@ fn initTable() [256]InstructionMetadata {
         .mnemonic = "LDA",
         .addressing_mode = .immediate,
         .cycles = 2,
+        .handler = &lda,
     };
 
     table[0xA5] = .{
         .mnemonic = "LDA",
         .addressing_mode = .zero_page,
         .cycles = 3,
+        .handler = &lda,
     };
 
     table[0xB5] = .{
         .mnemonic = "LDA",
         .addressing_mode = .zero_page_x,
         .cycles = 4,
+        .handler = &lda,
     };
 
     table[0xAD] = .{
         .mnemonic = "LDA",
         .addressing_mode = .absolute,
         .cycles = 4,
+        .handler = &lda,
     };
 
     table[0xBD] = .{
         .mnemonic = "LDA",
         .addressing_mode = .absolute_x,
         .cycles = 4,
+        .handler = &lda,
     };
 
     table[0xB9] = .{
         .mnemonic = "LDA",
         .addressing_mode = .absolute_y,
         .cycles = 4,
+        .handler = &lda,
     };
 
     table[0xA1] = .{
         .mnemonic = "LDA",
-        .addressing_mode = .indirect_x,
+        .addressing_mode = .pre_indexed_indirect,
         .cycles = 6,
+        .handler = &lda,
     };
 
     table[0xB1] = .{
         .mnemonic = "LDA",
-        .addressing_mode = .indirect_y,
+        .addressing_mode = .post_indexed_indirect,
         .cycles = 5,
+        .handler = &lda,
     };
 
     return table;

@@ -14,41 +14,51 @@ pub const AddressMode = enum {
     indirect_y,
 };
 
+pub const OperandType = enum {
+    none,
+    value,
+    address,
+};
+
 /// Contains the necessary metadata to execute an instruction
 pub const InstructionMetadata = struct {
     mnemonic: []const u8,
     addressing_mode: AddressMode,
+    operand_type: OperandType,
     cycles: u8,
-    handler: *const fn (*CPU, u8) void,
+    handler: *const fn (*CPU, u16) void,
 };
 
 /// Jams the CPU.
-fn jam(self: *CPU, op: u8) void {
+fn jam(self: *CPU, op: u16) void {
     _ = self;
     _ = op;
     while (true) {}
 }
 
 /// Loads a value into the CPU's A register, updating the negative and zero flags if necessary
-fn lda(self: *CPU, op: u8) void {
+fn lda(self: *CPU, op16: u16) void {
+    const op: u8 = @truncate(op16);
     self.a = op;
     self.update_nz_flags(op);
 }
 
 /// Loads a value into the CPU's X register, updating the negative and zero flags if necessary
-fn ldx(self: *CPU, op: u8) void {
+fn ldx(self: *CPU, op16: u16) void {
+    const op: u8 = @truncate(op16);
     self.x = op;
     self.update_nz_flags(op);
 }
 
 /// Loads a value into the CPU's Y register, updating the negative and zero flags if necessary
-fn ldy(self: *CPU, op: u8) void {
+fn ldy(self: *CPU, op16: u16) void {
+    const op: u8 = @truncate(op16);
     self.y = op;
     self.update_nz_flags(op);
 }
 
 /// Does nothing
-fn nop(self: *CPU, op: u8) void {
+fn nop(self: *CPU, op: u16) void {
     _ = self;
     _ = op;
 }
@@ -62,6 +72,7 @@ fn initTable() [256]InstructionMetadata {
         entry.* = .{
             .mnemonic = "JAM",
             .addressing_mode = .implied,
+            .operand_type = .none,
             .cycles = 255,
             .handler = &jam,
         };
@@ -71,6 +82,7 @@ fn initTable() [256]InstructionMetadata {
     table[0xEA] = .{
         .mnemonic = "NOP",
         .addressing_mode = .implied,
+        .operand_type = .none,
         .cycles = 2,
         .handler = &nop,
     };
@@ -79,6 +91,7 @@ fn initTable() [256]InstructionMetadata {
     table[0xA9] = .{
         .mnemonic = "LDA",
         .addressing_mode = .immediate,
+        .operand_type = .value,
         .cycles = 2,
         .handler = &lda,
     };
@@ -86,6 +99,7 @@ fn initTable() [256]InstructionMetadata {
     table[0xA5] = .{
         .mnemonic = "LDA",
         .addressing_mode = .zero_page,
+        .operand_type = .value,
         .cycles = 3,
         .handler = &lda,
     };
@@ -93,6 +107,7 @@ fn initTable() [256]InstructionMetadata {
     table[0xB5] = .{
         .mnemonic = "LDA",
         .addressing_mode = .zero_page_x,
+        .operand_type = .value,
         .cycles = 4,
         .handler = &lda,
     };
@@ -100,6 +115,7 @@ fn initTable() [256]InstructionMetadata {
     table[0xAD] = .{
         .mnemonic = "LDA",
         .addressing_mode = .absolute,
+        .operand_type = .value,
         .cycles = 4,
         .handler = &lda,
     };
@@ -107,6 +123,7 @@ fn initTable() [256]InstructionMetadata {
     table[0xBD] = .{
         .mnemonic = "LDA",
         .addressing_mode = .absolute_x,
+        .operand_type = .value,
         .cycles = 4,
         .handler = &lda,
     };
@@ -114,6 +131,7 @@ fn initTable() [256]InstructionMetadata {
     table[0xB9] = .{
         .mnemonic = "LDA",
         .addressing_mode = .absolute_y,
+        .operand_type = .value,
         .cycles = 4,
         .handler = &lda,
     };
@@ -121,6 +139,7 @@ fn initTable() [256]InstructionMetadata {
     table[0xA1] = .{
         .mnemonic = "LDA",
         .addressing_mode = .indirect_x,
+        .operand_type = .value,
         .cycles = 6,
         .handler = &lda,
     };
@@ -128,6 +147,7 @@ fn initTable() [256]InstructionMetadata {
     table[0xB1] = .{
         .mnemonic = "LDA",
         .addressing_mode = .indirect_y,
+        .operand_type = .value,
         .cycles = 5,
         .handler = &lda,
     };
@@ -136,6 +156,7 @@ fn initTable() [256]InstructionMetadata {
     table[0xA2] = .{
         .mnemonic = "LDX",
         .addressing_mode = .immediate,
+        .operand_type = .value,
         .cycles = 2,
         .handler = &ldx,
     };
@@ -143,6 +164,7 @@ fn initTable() [256]InstructionMetadata {
     table[0xA6] = .{
         .mnemonic = "LDX",
         .addressing_mode = .zero_page,
+        .operand_type = .value,
         .cycles = 3,
         .handler = &ldx,
     };
@@ -150,6 +172,7 @@ fn initTable() [256]InstructionMetadata {
     table[0xB6] = .{
         .mnemonic = "LDX",
         .addressing_mode = .zero_page_y,
+        .operand_type = .value,
         .cycles = 4,
         .handler = &ldx,
     };
@@ -157,6 +180,7 @@ fn initTable() [256]InstructionMetadata {
     table[0xAE] = .{
         .mnemonic = "LDX",
         .addressing_mode = .absolute,
+        .operand_type = .value,
         .cycles = 4,
         .handler = &ldx,
     };
@@ -164,6 +188,7 @@ fn initTable() [256]InstructionMetadata {
     table[0xBE] = .{
         .mnemonic = "LDX",
         .addressing_mode = .absolute_y,
+        .operand_type = .value,
         .cycles = 4,
         .handler = &ldx,
     };
@@ -172,6 +197,7 @@ fn initTable() [256]InstructionMetadata {
     table[0xA0] = .{
         .mnemonic = "LDY",
         .addressing_mode = .immediate,
+        .operand_type = .value,
         .cycles = 2,
         .handler = &ldy,
     };
@@ -179,6 +205,7 @@ fn initTable() [256]InstructionMetadata {
     table[0xA4] = .{
         .mnemonic = "LDY",
         .addressing_mode = .zero_page,
+        .operand_type = .value,
         .cycles = 3,
         .handler = &ldy,
     };
@@ -186,6 +213,7 @@ fn initTable() [256]InstructionMetadata {
     table[0xB4] = .{
         .mnemonic = "LDY",
         .addressing_mode = .zero_page_x,
+        .operand_type = .value,
         .cycles = 4,
         .handler = &ldy,
     };
@@ -193,6 +221,7 @@ fn initTable() [256]InstructionMetadata {
     table[0xAC] = .{
         .mnemonic = "LDY",
         .addressing_mode = .absolute,
+        .operand_type = .value,
         .cycles = 4,
         .handler = &ldy,
     };
@@ -200,6 +229,7 @@ fn initTable() [256]InstructionMetadata {
     table[0xBC] = .{
         .mnemonic = "LDY",
         .addressing_mode = .absolute_x,
+        .operand_type = .value,
         .cycles = 4,
         .handler = &ldy,
     };

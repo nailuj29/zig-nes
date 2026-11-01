@@ -1,20 +1,12 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
+const instructions = @import("./instructions.zig");
+const instruction_table = instructions.instruction_table;
+const AddressMode = instructions.AddressMode;
+
 const CPUError = error{
     IllegalAccess,
-};
-
-const AddressMode = enum {
-    immediate,
-    absolute,
-    zero_page,
-    absolute_x,
-    absolute_y,
-    zero_page_x,
-    zero_page_y,
-    pre_indexed_indirect,
-    post_indexed_indirect,
 };
 
 pub const CPU = struct {
@@ -47,6 +39,13 @@ pub const CPU = struct {
 
         @memcpy(self.ram[addr .. addr + code.len], code);
         self.writeWord(0xfffc, addr);
+    }
+
+    /// Runs the instruction the program counter points to, advancing as necessary
+    pub fn step(self: *CPU) CPUError!void {
+        const instr = self.advance();
+        const meta = instruction_table[instr];
+        const operand = self.get_operand(meta.addressing_mode);
     }
 
     /// Reads a single byte from the CPU's RAM
@@ -89,6 +88,7 @@ pub const CPU = struct {
     fn get_operand(self: *CPU, mode: AddressMode) u8 {
         // TODO: flag crossing of page boundary
         return switch (mode) {
+            .implied => unreachable, // No opcode that can have an addressing mode of `implied` should be calling this
             .immediate => self.advance(),
             .absolute => self.readByte(self.advanceWord()),
             .zero_page => self.readByte(self.advance()),

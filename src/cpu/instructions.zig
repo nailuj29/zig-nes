@@ -41,6 +41,12 @@ fn ldx(self: *CPU, op: u8) void {
     self.update_nz_flags(op);
 }
 
+/// Loads a value into the CPU's Y register, updating the negative and zero flags if necessary
+fn ldy(self: *CPU, op: u8) void {
+    self.y = op;
+    self.update_nz_flags(op);
+}
+
 /// Does nothing
 fn nop(self: *CPU, op: u8) void {
     _ = self;
@@ -162,6 +168,42 @@ fn initTable() [256]InstructionMetadata {
         .handler = &ldx,
     };
 
+    // LDY:
+    table[0xA0] = .{
+        .mnemonic = "LDY",
+        .addressing_mode = .immediate,
+        .cycles = 2,
+        .handler = &ldy,
+    };
+
+    table[0xA4] = .{
+        .mnemonic = "LDY",
+        .addressing_mode = .zero_page,
+        .cycles = 3,
+        .handler = &ldy,
+    };
+
+    table[0xB4] = .{
+        .mnemonic = "LDY",
+        .addressing_mode = .zero_page_x,
+        .cycles = 4,
+        .handler = &ldy,
+    };
+
+    table[0xAC] = .{
+        .mnemonic = "LDY",
+        .addressing_mode = .absolute,
+        .cycles = 4,
+        .handler = &ldy,
+    };
+
+    table[0xBC] = .{
+        .mnemonic = "LDY",
+        .addressing_mode = .absolute_x,
+        .cycles = 4,
+        .handler = &ldy,
+    };
+
     return table;
 }
 
@@ -245,4 +287,24 @@ test "LDX" {
     try expectEqual(2, cycle_count);
     try expectEqual(0x2002, cpu.pc);
     try expectEqual(0x42, cpu.x);
+}
+
+test "LDY" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA0, 0x42, // LDY #42
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    const cycle_count = cpu.step();
+    try expectEqual(2, cycle_count);
+    try expectEqual(0x2002, cpu.pc);
+    try expectEqual(0x42, cpu.y);
 }

@@ -33,6 +33,11 @@ pub const InstructionMetadata = struct {
 fn jam(self: *CPU, op: u16) void {
     _ = self;
     _ = op;
+
+    if (@import("builtin").is_test) {
+        @panic("Illegal instruction reached");
+    }
+
     while (true) {}
 }
 

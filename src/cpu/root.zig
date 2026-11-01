@@ -53,24 +53,24 @@ pub const CPU = struct {
     }
 
     /// Reads a single byte from the CPU's RAM
-    fn readByte(self: CPU, addr: u16) u8 {
+    pub fn readByte(self: CPU, addr: u16) u8 {
         return self.ram[addr];
     }
 
     /// Writes a single byte to the CPU's RAM
-    fn writeByte(self: CPU, addr: u16, byte: u8) void {
+    pub fn writeByte(self: CPU, addr: u16, byte: u8) void {
         self.ram[addr] = byte;
     }
 
     /// Reads a single 16-bit word from the CPU's RAM
-    fn readWord(self: CPU, addr: u16) u16 {
+    pub fn readWord(self: CPU, addr: u16) u16 {
         const high: u16 = self.ram[addr + 1];
         const low: u16 = self.ram[addr];
         return (high << 8) | low;
     }
 
     /// Writes a single 16-bit word to the CPU's RAM
-    fn writeWord(self: CPU, addr: u16, word: u16) void {
+    pub fn writeWord(self: CPU, addr: u16, word: u16) void {
         self.ram[addr] = @truncate(word & 0xff);
         self.ram[addr + 1] = @truncate(word >> 8);
     }
@@ -92,7 +92,7 @@ pub const CPU = struct {
     fn get_operand(self: *CPU, mode: AddressMode) u8 {
         // TODO: flag crossing of page boundary
         return switch (mode) {
-            .implied => unreachable, // No opcode that can have an addressing mode of `implied` should be calling this
+            .implied => 255, // No opcode that can have an addressing mode of `implied` should be using this, return a garbage value
             .immediate => self.advance(),
             .absolute => self.readByte(self.advanceWord()),
             .zero_page => self.readByte(self.advance()),
@@ -388,44 +388,4 @@ test "(Indirect),Y addressing mode" {
 
     _ = cpu.advance(); // Go past instruction
     try expectEqual(0xaa, cpu.get_operand(.post_indexed_indirect));
-}
-
-test "LDA" {
-    const gpa = std.testing.allocator;
-    const expectEqual = std.testing.expectEqual;
-    const expect = std.testing.expect;
-
-    var cpu = try CPU.init(gpa);
-    defer cpu.deinit(gpa);
-
-    var code = [_]u8{
-        0xA9, 0x42, // LDA #42
-        0xA5, 0x42, // LDA $42
-        0xB5, 0x42, // LDA $42,X
-    };
-
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
-
-    cpu.writeByte(0x42, 0x80);
-    cpu.writeByte(0x84, 0x00);
-
-    cpu.x = 0x42;
-
-    const cycle_count = cpu.step();
-    try expectEqual(2, cycle_count);
-    try expectEqual(0x2002, cpu.pc);
-    try expectEqual(0x42, cpu.a);
-
-    const cycle_count2 = cpu.step();
-    try expectEqual(3, cycle_count2);
-    try expectEqual(0x2004, cpu.pc);
-    try expectEqual(0x80, cpu.a);
-    try expect(0b10000000 & cpu.p != 0);
-
-    const cycle_count3 = cpu.step();
-    try expectEqual(4, cycle_count3);
-    try expectEqual(0x2006, cpu.pc);
-    try expectEqual(0x00, cpu.a);
-    try expect(0b00000010 & cpu.p != 0);
 }

@@ -100,12 +100,12 @@ pub const CPU = struct {
             .absolute_y => self.readByte(self.advanceWord() + self.y),
             .zero_page_x => self.readByte((self.advance() + self.x) & 0xff),
             .zero_page_y => self.readByte((self.advance() + self.y) & 0xff),
-            .pre_indexed_indirect => blk: {
+            .indirect_x => blk: {
                 const addr_indirect = (self.advance() + self.x) & 0xff;
                 const addr_actual = self.readWord(addr_indirect);
                 break :blk self.readByte(addr_actual);
             },
-            .post_indexed_indirect => blk: {
+            .indirect_y => blk: {
                 const addr_indirect = self.advance();
                 const addr_actual = self.readWord(addr_indirect) + self.y;
                 break :blk self.readByte(addr_actual);
@@ -364,7 +364,7 @@ test "(Indirect, X) addressing mode" {
     cpu.writeByte(0x4200, 0xaa);
 
     _ = cpu.advance(); // Go past instruction
-    try expectEqual(0xaa, cpu.get_operand(.pre_indexed_indirect));
+    try expectEqual(0xaa, cpu.get_operand(.indirect_x));
 }
 
 test "(Indirect),Y addressing mode" {
@@ -387,5 +387,5 @@ test "(Indirect),Y addressing mode" {
     cpu.writeByte(0x4242, 0xaa);
 
     _ = cpu.advance(); // Go past instruction
-    try expectEqual(0xaa, cpu.get_operand(.post_indexed_indirect));
+    try expectEqual(0xaa, cpu.get_operand(.indirect_y));
 }

@@ -10,8 +10,8 @@ pub const AddressMode = enum {
     absolute_y,
     zero_page_x,
     zero_page_y,
-    pre_indexed_indirect,
-    post_indexed_indirect,
+    indirect_x,
+    indirect_y,
 };
 
 /// Contains the necessary metadata to execute an instruction
@@ -108,14 +108,14 @@ fn initTable() [256]InstructionMetadata {
 
     table[0xA1] = .{
         .mnemonic = "LDA",
-        .addressing_mode = .pre_indexed_indirect,
+        .addressing_mode = .indirect_x,
         .cycles = 6,
         .handler = &lda,
     };
 
     table[0xB1] = .{
         .mnemonic = "LDA",
-        .addressing_mode = .post_indexed_indirect,
+        .addressing_mode = .indirect_y,
         .cycles = 5,
         .handler = &lda,
     };

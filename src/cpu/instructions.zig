@@ -67,6 +67,16 @@ fn sta(self: *CPU, op: u16) void {
     self.writeByte(op, self.a);
 }
 
+/// Stores a value from the CPU's X register in memory
+fn stx(self: *CPU, op: u16) void {
+    self.writeByte(op, self.x);
+}
+
+/// Stores a value from the CPU's Y register in memory
+fn sty(self: *CPU, op: u16) void {
+    self.writeByte(op, self.y);
+}
+
 /// Does nothing
 fn nop(self: *CPU, op: u16) void {
     _ = self;
@@ -256,7 +266,7 @@ fn initTable() [256]InstructionMetadata {
     table[0x95] = .{
         .mnemonic = "STA",
         .addressing_mode = .zero_page_x,
-        .operand_type = .value,
+        .operand_type = .address,
         .cycles = 4,
         .handler = &sta,
     };
@@ -299,6 +309,56 @@ fn initTable() [256]InstructionMetadata {
         .operand_type = .address,
         .cycles = 5,
         .handler = &sta,
+    };
+
+    // STX:
+    table[0x86] = .{
+        .mnemonic = "STX",
+        .addressing_mode = .zero_page,
+        .operand_type = .address,
+        .cycles = 3,
+        .handler = &stx,
+    };
+
+    table[0x96] = .{
+        .mnemonic = "STX",
+        .addressing_mode = .zero_page_y,
+        .operand_type = .address,
+        .cycles = 4,
+        .handler = &stx,
+    };
+
+    table[0x8E] = .{
+        .mnemonic = "STX",
+        .addressing_mode = .absolute,
+        .operand_type = .address,
+        .cycles = 4,
+        .handler = &stx,
+    };
+
+    // STY:
+    table[0x84] = .{
+        .mnemonic = "STY",
+        .addressing_mode = .zero_page,
+        .operand_type = .address,
+        .cycles = 3,
+        .handler = &sty,
+    };
+
+    table[0x94] = .{
+        .mnemonic = "STY",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .address,
+        .cycles = 4,
+        .handler = &sty,
+    };
+
+    table[0x8C] = .{
+        .mnemonic = "STY",
+        .addressing_mode = .absolute,
+        .operand_type = .address,
+        .cycles = 4,
+        .handler = &sty,
     };
 
     return table;
@@ -416,6 +476,50 @@ test "STA" {
     var code = [_]u8{
         0xA9, 0x42, // LDA #42
         0x8D, 0x00, 0x80, // STA $8000
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step(); // skip the LDA
+    const cycle_count = try cpu.step();
+    try expectEqual(4, cycle_count);
+    try expectEqual(0x2005, cpu.pc);
+    try expectEqual(0x42, cpu.readByte(0x8000));
+}
+
+test "STX" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA2, 0x42, // LDX #42
+        0x8E, 0x00, 0x80, // STX $8000
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step(); // skip the LDA
+    const cycle_count = try cpu.step();
+    try expectEqual(4, cycle_count);
+    try expectEqual(0x2005, cpu.pc);
+    try expectEqual(0x42, cpu.readByte(0x8000));
+}
+
+test "STY" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA0, 0x42, // LDY #42
+        0x8C, 0x00, 0x80, // STY $8000
     };
 
     try cpu.loadCode(0x2000, &code);

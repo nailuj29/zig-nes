@@ -185,7 +185,7 @@ test "LDA" {
     try cpu.loadCode(0x2000, &code);
     cpu.pc = 0x2000;
 
-    cpu.writeByte(0x42, 0x80);
+    cpu.writeByte(0x42, 0x80); // -128 in 2's complement
     cpu.writeByte(0x84, 0x00);
 
     cpu.x = 0x42;

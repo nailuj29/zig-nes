@@ -389,3 +389,17 @@ test "(Indirect),Y addressing mode" {
     _ = cpu.advance(); // Go past instruction
     try expectEqual(0xaa, cpu.get_operand(.indirect_y));
 }
+
+test "Zero and negative flags" {
+    const gpa = std.testing.allocator;
+    const expect = std.testing.expect;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    cpu.update_nz_flags(0);
+    try expect(0b00000010 & cpu.p != 0);
+
+    cpu.update_nz_flags(255); // -1 in 2's complement
+    try expect(0b10000000 & cpu.p != 0);
+}

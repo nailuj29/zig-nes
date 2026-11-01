@@ -1,3 +1,5 @@
+const CPU = @import("./root.zig").CPU;
+
 pub const AddressMode = enum {
     implied,
     immediate,
@@ -11,21 +13,32 @@ pub const AddressMode = enum {
     post_indexed_indirect,
 };
 
+/// Contains the necessary metadata to execute an instruction
 pub const InstructionMetadata = struct {
     mnemonic: []const u8,
     addressing_mode: AddressMode,
     cycles: u8,
+    handler: *const fn (*CPU, u8) void,
 };
 
+/// Jams the CPU.
+fn jam(self: *CPU, op: u8) void {
+    _ = self;
+    _ = op;
+    while (true) {}
+}
+
+/// Initializes the table of instruction metadata at comptime
 fn initTable() [256]InstructionMetadata {
     var table: [256]InstructionMetadata = .{};
 
     // Set defaults:
     for (&table) |*entry| {
         entry.* = .{
-            .mnemonic = "N/A",
+            .mnemonic = "JAM",
             .addressing_mode = .implied,
             .cycles = -1,
+            .handler = &jam,
         };
     }
 
@@ -81,4 +94,5 @@ fn initTable() [256]InstructionMetadata {
     return table;
 }
 
+/// A table of all 256 possible opcodes the CPU may encounter
 pub const instruction_table: [256]InstructionMetadata = initTable();

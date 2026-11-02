@@ -16,7 +16,7 @@ pub const CPU = struct {
     x: u8 = 0,
     y: u8 = 0,
     pc: u16 = 0,
-    s: u8 = 0,
+    s: u8 = 0xfd,
     p: u8 = 0,
 
     /// Initialize the CPU. Requires an allocator so the CPU struct can reserve 64KB of RAM

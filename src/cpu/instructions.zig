@@ -77,6 +77,48 @@ fn sty(self: *CPU, op: u16) void {
     self.writeByte(op, self.y);
 }
 
+/// Transfers the CPU's A register to its X register
+fn tax(self: *CPU, op: u16) void {
+    _ = op;
+    self.x = self.a;
+    self.update_nz_flags(self.x);
+}
+
+/// Transfers the CPU's A register to its Y register
+fn tay(self: *CPU, op: u16) void {
+    _ = op;
+    self.y = self.a;
+    self.update_nz_flags(self.y);
+}
+
+/// Transfers the CPU's stack pointer to its X register
+fn tsx(self: *CPU, op: u16) void {
+    _ = op;
+    self.x = self.s;
+    self.update_nz_flags(self.x);
+}
+
+/// Transfers the CPU's X register to its A register
+fn txa(self: *CPU, op: u16) void {
+    _ = op;
+    self.a = self.x;
+    self.update_nz_flags(self.a);
+}
+
+/// Transfers the CPU's X register to its stack pointer
+fn txs(self: *CPU, op: u16) void {
+    _ = op;
+    self.s = self.x;
+    self.update_nz_flags(self.s);
+}
+
+/// Transfers the CPU's Y register to its A register
+fn tya(self: *CPU, op: u16) void {
+    _ = op;
+    self.a = self.y;
+    self.update_nz_flags(self.a);
+}
+
 /// Does nothing
 fn nop(self: *CPU, op: u16) void {
     _ = self;
@@ -361,6 +403,69 @@ fn initTable() [256]InstructionMetadata {
         .handler = &sty,
     };
 
+    // TAX:
+    table[0xAA] = .{
+        .mnemonic = "TAX",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &tax,
+    };
+
+    // TAY:
+    table[0xA8] = .{
+        .mnemonic = "TAY",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &tay,
+    };
+
+    // TAY:
+    table[0xA8] = .{
+        .mnemonic = "TAY",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &tay,
+    };
+
+    // TSX:
+    table[0xBA] = .{
+        .mnemonic = "TSX",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &tsx,
+    };
+
+    // TXA:
+    table[0x8A] = .{
+        .mnemonic = "TXA",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &txa,
+    };
+
+    // TXS:
+    table[0x9A] = .{
+        .mnemonic = "TXS",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &txs,
+    };
+
+    // TYA:
+    table[0x98] = .{
+        .mnemonic = "TYA",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &tya,
+    };
+
     return table;
 }
 
@@ -530,4 +635,134 @@ test "STY" {
     try expectEqual(4, cycle_count);
     try expectEqual(0x2005, cpu.pc);
     try expectEqual(0x42, cpu.readByte(0x8000));
+}
+
+test "TAX" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA9, 0x42, // LDA #42
+        0xAA, // TAX
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step(); // Skip LDA
+    const cycle_count = try cpu.step();
+    try expectEqual(2, cycle_count);
+    try expectEqual(0x2003, cpu.pc);
+    try expectEqual(0x42, cpu.x);
+}
+
+test "TAY" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA9, 0x42, // LDA #42
+        0xA8, // TAY
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step(); // Skip LDA
+    const cycle_count = try cpu.step();
+    try expectEqual(2, cycle_count);
+    try expectEqual(0x2003, cpu.pc);
+    try expectEqual(0x42, cpu.y);
+}
+
+test "TSX" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xBA, // TSX
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    const cycle_count = try cpu.step();
+    try expectEqual(2, cycle_count);
+    try expectEqual(0x2001, cpu.pc);
+    try expectEqual(0xfd, cpu.x);
+}
+
+test "TXA" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA2, 0x42, // LDX #42
+        0x8A, // TXA
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step(); // Skip LDX
+    const cycle_count = try cpu.step();
+    try expectEqual(2, cycle_count);
+    try expectEqual(0x2003, cpu.pc);
+    try expectEqual(0x42, cpu.a);
+}
+
+test "TXS" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA2, 0x42, // LDX #42
+        0x9A, // TAY
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step(); // Skip LDX
+    const cycle_count = try cpu.step();
+    try expectEqual(2, cycle_count);
+    try expectEqual(0x2003, cpu.pc);
+    try expectEqual(0x42, cpu.s);
+}
+
+test "TYA" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA0, 0x42, // LDY #42
+        0x98, // TYA
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step(); // Skip LDY
+    const cycle_count = try cpu.step();
+    try expectEqual(2, cycle_count);
+    try expectEqual(0x2003, cpu.pc);
+    try expectEqual(0x42, cpu.a);
 }

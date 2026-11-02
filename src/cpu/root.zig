@@ -16,14 +16,14 @@ pub const CPU = struct {
     x: u8 = 0,
     y: u8 = 0,
     pc: u16 = 0,
-    s: u8 = 0xfd,
-    p: u8 = 0,
+    sp: u8 = 0xfd,
+    flags: u8 = 0,
 
     /// Initialize the CPU. Requires an allocator so the CPU struct can reserve 64KB of RAM
     pub fn init(allocator: Allocator) !CPU {
         var cpu: CPU = .{};
         cpu.ram = try allocator.alloc(u8, 65536); // CPU can technically access 64KB, this should be configurable, though.
-        cpu.p = 0b00100000; // bit 5 is always set
+        cpu.flags = 0b00100000; // bit 5 is always set
         return cpu;
     }
 
@@ -123,15 +123,15 @@ pub const CPU = struct {
     /// Updates the negative and zero flags after an instruction is executed
     pub fn update_nz_flags(self: *CPU, value: u8) void {
         if (value == 0) {
-            self.p = self.p | 0b00000010;
+            self.flags = self.flags | 0b00000010;
         } else {
-            self.p = self.p & 0b11111101;
+            self.flags = self.flags & 0b11111101;
         }
 
         if ((value & (1 << 7)) != 0) { // Negative bit in the integer is set
-            self.p = self.p | 0b10000000;
+            self.flags = self.flags | 0b10000000;
         } else {
-            self.p = self.p & 0b01111111;
+            self.flags = self.flags & 0b01111111;
         }
     }
 };
@@ -425,8 +425,8 @@ test "Zero and negative flags" {
     defer cpu.deinit(gpa);
 
     cpu.update_nz_flags(0);
-    try expect(0b00000010 & cpu.p != 0);
+    try expect(0b00000010 & cpu.flags != 0);
 
     cpu.update_nz_flags(255); // -1 in 2's complement
-    try expect(0b10000000 & cpu.p != 0);
+    try expect(0b10000000 & cpu.flags != 0);
 }

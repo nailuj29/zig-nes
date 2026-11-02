@@ -94,7 +94,7 @@ fn tay(self: *CPU, op: u16) void {
 /// Transfers the CPU's stack pointer to its X register
 fn tsx(self: *CPU, op: u16) void {
     _ = op;
-    self.x = self.s;
+    self.x = self.sp;
     self.update_nz_flags(self.x);
 }
 
@@ -108,8 +108,8 @@ fn txa(self: *CPU, op: u16) void {
 /// Transfers the CPU's X register to its stack pointer
 fn txs(self: *CPU, op: u16) void {
     _ = op;
-    self.s = self.x;
-    self.update_nz_flags(self.s);
+    self.sp = self.x;
+    self.update_nz_flags(self.sp);
 }
 
 /// Transfers the CPU's Y register to its A register
@@ -503,13 +503,13 @@ test "LDA" {
     try expectEqual(3, cycle_count2);
     try expectEqual(0x2004, cpu.pc);
     try expectEqual(0x80, cpu.a);
-    try expect(0b10000000 & cpu.p != 0);
+    try expect(0b10000000 & cpu.flags != 0);
 
     const cycle_count3 = try cpu.step();
     try expectEqual(4, cycle_count3);
     try expectEqual(0x2006, cpu.pc);
     try expectEqual(0x00, cpu.a);
-    try expect(0b00000010 & cpu.p != 0);
+    try expect(0b00000010 & cpu.flags != 0);
 }
 
 test "NOP" {
@@ -742,7 +742,7 @@ test "TXS" {
     const cycle_count = try cpu.step();
     try expectEqual(2, cycle_count);
     try expectEqual(0x2003, cpu.pc);
-    try expectEqual(0x42, cpu.s);
+    try expectEqual(0x42, cpu.sp);
 }
 
 test "TYA" {

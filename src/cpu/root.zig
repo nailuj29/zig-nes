@@ -100,6 +100,7 @@ pub const CPU = struct {
             .absolute_y => self.advanceWord() + self.y,
             .zero_page_x => (self.advance() + self.x) & 0xff,
             .zero_page_y => (self.advance() + self.y) & 0xff,
+            .indirect => self.readWord(self.advanceWord()),
             .indirect_x => blk: {
                 const addr_indirect = (self.advance() + self.x) & 0xff;
                 const addr_actual = self.readWord(addr_indirect);
@@ -349,6 +350,26 @@ test "Zero-page,Y addressing mode" {
 
     _ = cpu.advance(); // Go past instruction
     try expectEqual(0xaa, cpu.get_operand(.zero_page_x, .value));
+}
+
+test "Indirect addressing mode" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0x6C, 0x00, 0x42, // JMP ($4200)
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.writeWord(0x4200, 0xaaaa);
+
+    _ = cpu.advance(); // Go past instruction
+    try expectEqual(0xaaaa, cpu.get_operand(.indirect, .address));
 }
 
 test "(Indirect, X) addressing mode" {

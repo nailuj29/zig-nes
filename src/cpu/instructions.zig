@@ -131,6 +131,37 @@ fn nop(self: *CPU, op: u16) void {
     _ = op;
 }
 
+/// Adds a value from memory to the computer with the carry flag
+fn adc(self: *CPU, op16: u16) void {
+    const carry = self.flags & 0b00000001;
+    const result16 = self.a + op16 + carry;
+
+    const resultCarry = result16 & (1 << 8);
+    const resultSignBit = result16 & (1 << 7);
+    const aSignBit = self.a & (1 << 7);
+    const opSignBit = op16 & (1 << 7);
+
+    const result: u8 = @truncate(result16);
+
+    const overflow = (aSignBit == opSignBit) and (aSignBit != resultSignBit);
+
+    self.a = result;
+
+    if (resultCarry != 0) {
+        self.flags = self.flags | 0b00000001;
+    } else {
+        self.flags = self.flags & 0b11111110;
+    }
+
+    if (overflow) {
+        self.flags = self.flags | 0b01000000;
+    } else {
+        self.flags = self.flags & 0b10111111;
+    }
+
+    self.update_nz_flags(self.a);
+}
+
 /// Initializes the table of instruction metadata at comptime
 fn initTable() [256]InstructionMetadata {
     var table: [256]InstructionMetadata = undefined;
@@ -489,6 +520,71 @@ fn initTable() [256]InstructionMetadata {
         .handler = &jmp,
     };
 
+    // ADC:
+    table[0x69] = .{
+        .mnemonic = "ADC",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &adc,
+    };
+
+    table[0x65] = .{
+        .mnemonic = "ADC",
+        .addressing_mode = .zero_page,
+        .operand_type = .value,
+        .cycles = 3,
+        .handler = &adc,
+    };
+
+    table[0x75] = .{
+        .mnemonic = "ADC",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &adc,
+    };
+
+    table[0x6D] = .{
+        .mnemonic = "ADC",
+        .addressing_mode = .absolute,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &adc,
+    };
+
+    table[0x7D] = .{
+        .mnemonic = "ADC",
+        .addressing_mode = .absolute_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &adc,
+    };
+
+    table[0x79] = .{
+        .mnemonic = "ADC",
+        .addressing_mode = .absolute_y,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &adc,
+    };
+
+    table[0x61] = .{
+        .mnemonic = "ADC",
+        .addressing_mode = .indirect_x,
+        .operand_type = .value,
+        .cycles = 6,
+        .handler = &adc,
+    };
+
+    table[0x71] = .{
+        .mnemonic = "ADC",
+        .addressing_mode = .indirect_y,
+        .operand_type = .value,
+        .cycles = 5,
+        .handler = &adc,
+    };
+
     return table;
 }
 
@@ -807,4 +903,44 @@ test "JMP" {
     const cycle_count = try cpu.step();
     try expectEqual(3, cycle_count);
     try expectEqual(0x4200, cpu.pc);
+}
+
+test "ADC" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+    const expect = std.testing.expect;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA9, 0x42, // LDA #42
+        0x69, 0x10, // ADC #10 ; A = 0x52
+        0x69, 0x30, // ADC #30 ; A = 0x82 ; V
+        0x69, 0x80, // ADC #80 ; A = 0x02 ; V, C
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step();
+
+    const cycle_count = try cpu.step();
+    try expectEqual(2, cycle_count);
+    try expectEqual(0x2004, cpu.pc);
+    try expectEqual(0x52, cpu.a);
+    try expect(0b01000000 & cpu.flags == 0);
+    try expect(0b00000001 & cpu.flags == 0);
+
+    _ = try cpu.step();
+    try expectEqual(0x2006, cpu.pc);
+    try expectEqual(0x82, cpu.a);
+    try expect(0b01000000 & cpu.flags != 0);
+    try expect(0b00000001 & cpu.flags == 0);
+
+    _ = try cpu.step();
+    try expectEqual(0x2008, cpu.pc);
+    try expectEqual(0x02, cpu.a);
+    try expect(0b01000000 & cpu.flags != 0);
+    try expect(0b00000001 & cpu.flags != 0);
 }

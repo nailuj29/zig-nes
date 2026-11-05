@@ -6,6 +6,17 @@ const instruction_table = instructions.instruction_table;
 const AddressMode = instructions.AddressMode;
 const OperandType = instructions.OperandType;
 
+const CPUFlags = packed struct {
+    negative: bool = false,
+    overflow: bool = false,
+    unused: bool = true,
+    b: bool = false,
+    decimal: bool = false,
+    interrupt_disable: bool = false,
+    zero: bool = false,
+    carry: bool = false,
+};
+
 const CPUError = error{
     IllegalAccess,
 };
@@ -17,13 +28,12 @@ pub const CPU = struct {
     y: u8 = 0,
     pc: u16 = 0,
     sp: u8 = 0xfd,
-    flags: u8 = 0,
+    flags: CPUFlags = .{},
 
     /// Initialize the CPU. Requires an allocator so the CPU struct can reserve 64KB of RAM
     pub fn init(allocator: Allocator) !CPU {
         var cpu: CPU = .{};
         cpu.ram = try allocator.alloc(u8, 65536); // CPU can technically access 64KB, this should be configurable, though.
-        cpu.flags = 0b00100000; // bit 5 is always set
         return cpu;
     }
 
@@ -123,17 +133,8 @@ pub const CPU = struct {
 
     /// Updates the negative and zero flags after an instruction is executed
     pub fn update_nz_flags(self: *CPU, value: u8) void {
-        if (value == 0) {
-            self.flags = self.flags | 0b00000010;
-        } else {
-            self.flags = self.flags & 0b11111101;
-        }
-
-        if ((value & (1 << 7)) != 0) { // Negative bit in the integer is set
-            self.flags = self.flags | 0b10000000;
-        } else {
-            self.flags = self.flags & 0b01111111;
-        }
+        self.flags.zero = value == 0;
+        self.flags.negative = (value & (1 << 7)) != 0;
     }
 };
 
@@ -446,8 +447,8 @@ test "Zero and negative flags" {
     defer cpu.deinit(gpa);
 
     cpu.update_nz_flags(0);
-    try expect(0b00000010 & cpu.flags != 0);
+    try expect(cpu.flags.zero);
 
     cpu.update_nz_flags(255); // -1 in 2's complement
-    try expect(0b10000000 & cpu.flags != 0);
+    try expect(cpu.flags.negative);
 }

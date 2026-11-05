@@ -133,7 +133,7 @@ fn nop(self: *CPU, op: u16) void {
 
 /// Adds a value from memory to the computer with the carry flag
 fn adc(self: *CPU, op16: u16) void {
-    const carry = self.flags & 0b00000001;
+    const carry: u8 = if (self.flags.carry) 1 else 0;
     const result16 = self.a + op16 + carry;
 
     const resultCarry = result16 & (1 << 8);
@@ -147,17 +147,9 @@ fn adc(self: *CPU, op16: u16) void {
 
     self.a = result;
 
-    if (resultCarry != 0) {
-        self.flags = self.flags | 0b00000001;
-    } else {
-        self.flags = self.flags & 0b11111110;
-    }
+    self.flags.carry = resultCarry != 0;
 
-    if (overflow) {
-        self.flags = self.flags | 0b01000000;
-    } else {
-        self.flags = self.flags & 0b10111111;
-    }
+    self.flags.overflow = overflow;
 
     self.update_nz_flags(self.a);
 }
@@ -622,13 +614,13 @@ test "LDA" {
     try expectEqual(3, cycle_count2);
     try expectEqual(0x2004, cpu.pc);
     try expectEqual(0x80, cpu.a);
-    try expect(0b10000000 & cpu.flags != 0);
+    try expect(cpu.flags.negative);
 
     const cycle_count3 = try cpu.step();
     try expectEqual(4, cycle_count3);
     try expectEqual(0x2006, cpu.pc);
     try expectEqual(0x00, cpu.a);
-    try expect(0b00000010 & cpu.flags != 0);
+    try expect(cpu.flags.zero);
 }
 
 test "NOP" {
@@ -929,18 +921,18 @@ test "ADC" {
     try expectEqual(2, cycle_count);
     try expectEqual(0x2004, cpu.pc);
     try expectEqual(0x52, cpu.a);
-    try expect(0b01000000 & cpu.flags == 0);
-    try expect(0b00000001 & cpu.flags == 0);
+    try expect(!cpu.flags.overflow);
+    try expect(!cpu.flags.carry);
 
     _ = try cpu.step();
     try expectEqual(0x2006, cpu.pc);
     try expectEqual(0x82, cpu.a);
-    try expect(0b01000000 & cpu.flags != 0);
-    try expect(0b00000001 & cpu.flags == 0);
+    try expect(cpu.flags.overflow);
+    try expect(!cpu.flags.carry);
 
     _ = try cpu.step();
     try expectEqual(0x2008, cpu.pc);
     try expectEqual(0x02, cpu.a);
-    try expect(0b01000000 & cpu.flags != 0);
-    try expect(0b00000001 & cpu.flags != 0);
+    try expect(cpu.flags.overflow);
+    try expect(cpu.flags.carry);
 }

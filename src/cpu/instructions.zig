@@ -912,6 +912,7 @@ test "ADC" {
         0x69, 0x10, // ADC #10 ; A = 0x52
         0x69, 0x30, // ADC #30 ; A = 0x82 ; V
         0x69, 0x80, // ADC #80 ; A = 0x02 ; V, C
+        0x69, 0x00, // ADC #00 ; A = 0x03 since C is set
     };
 
     try cpu.loadCode(0x2000, &code);
@@ -937,4 +938,10 @@ test "ADC" {
     try expectEqual(0x02, cpu.a);
     try expect(cpu.flags.overflow);
     try expect(cpu.flags.carry);
+
+    _ = try cpu.step();
+    try expectEqual(0x200a, cpu.pc);
+    try expectEqual(0x03, cpu.a);
+    try expect(!cpu.flags.overflow);
+    try expect(!cpu.flags.carry);
 }

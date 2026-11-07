@@ -156,6 +156,11 @@ fn adc(self: *CPU, op16: u16) void {
     self.update_nz_flags(self.a);
 }
 
+/// Subtracts a value from memory to the computer with the carry flag
+fn sbc(self: *CPU, op16: u16) void {
+    adc(self, ~op16 & 0xff);
+}
+
 /// Initializes the table of instruction metadata at comptime
 fn initTable() [256]InstructionMetadata {
     var table: [256]InstructionMetadata = undefined;
@@ -579,6 +584,71 @@ fn initTable() [256]InstructionMetadata {
         .handler = &adc,
     };
 
+    // SBC:
+    table[0xE9] = .{
+        .mnemonic = "SBC",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &sbc,
+    };
+
+    table[0xE5] = .{
+        .mnemonic = "SBC",
+        .addressing_mode = .zero_page,
+        .operand_type = .value,
+        .cycles = 3,
+        .handler = &sbc,
+    };
+
+    table[0xF5] = .{
+        .mnemonic = "SBC",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &sbc,
+    };
+
+    table[0xED] = .{
+        .mnemonic = "SBC",
+        .addressing_mode = .absolute,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &sbc,
+    };
+
+    table[0xFD] = .{
+        .mnemonic = "SBC",
+        .addressing_mode = .absolute_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &sbc,
+    };
+
+    table[0xF9] = .{
+        .mnemonic = "SBC",
+        .addressing_mode = .absolute_y,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &sbc,
+    };
+
+    table[0xE1] = .{
+        .mnemonic = "SBC",
+        .addressing_mode = .indirect_x,
+        .operand_type = .value,
+        .cycles = 6,
+        .handler = &sbc,
+    };
+
+    table[0xF1] = .{
+        .mnemonic = "SBC",
+        .addressing_mode = .indirect_y,
+        .operand_type = .value,
+        .cycles = 5,
+        .handler = &sbc,
+    };
+
     return table;
 }
 
@@ -944,4 +1014,32 @@ test "ADC" {
     try expectEqual(0x03, cpu.a);
     try expect(!cpu.flags.overflow);
     try expect(!cpu.flags.carry);
+}
+
+test "SBC" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+    const expect = std.testing.expect;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        // ; SEC not yet implemented, will be manually done
+        0xA9, 0x42, // LDA #42
+        0xE9, 0x40, // SBC #40 ; A = 0x02 ; C
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step();
+
+    cpu.flags.carry = true;
+
+    _ = try cpu.step();
+    try expectEqual(0x2004, cpu.pc);
+    try expectEqual(0x02, cpu.a);
+    try expect(!cpu.flags.overflow);
+    try expect(cpu.flags.carry);
 }

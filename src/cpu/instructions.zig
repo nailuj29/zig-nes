@@ -1,6 +1,7 @@
 const CPU = @import("./root.zig").CPU;
 const std = @import("std");
 
+/// Possible addressing modes for an instruction
 pub const AddressMode = enum {
     implied,
     immediate,
@@ -15,6 +16,7 @@ pub const AddressMode = enum {
     indirect_y,
 };
 
+/// Possible operand types for an instruction (memory or value for all instructions with an operand)
 pub const OperandType = enum {
     none,
     value,

@@ -33,8 +33,8 @@ pub const InstructionMetadata = struct {
 };
 
 /// Jams the CPU.
-fn jam(self: *CPU, op: u16) void {
-    _ = self;
+fn jam(cpu: *CPU, op: u16) void {
+    _ = cpu;
     _ = op;
 
     if (@import("builtin").is_test) {
@@ -45,120 +45,120 @@ fn jam(self: *CPU, op: u16) void {
 }
 
 /// Loads a value into the CPU's A register, updating the negative and zero flags if necessary
-fn lda(self: *CPU, op16: u16) void {
+fn lda(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
-    self.a = op;
-    self.update_nz_flags(op);
+    cpu.a = op;
+    cpu.update_nz_flags(op);
 }
 
 /// Loads a value into the CPU's X register, updating the negative and zero flags if necessary
-fn ldx(self: *CPU, op16: u16) void {
+fn ldx(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
-    self.x = op;
-    self.update_nz_flags(op);
+    cpu.x = op;
+    cpu.update_nz_flags(op);
 }
 
 /// Loads a value into the CPU's Y register, updating the negative and zero flags if necessary
-fn ldy(self: *CPU, op16: u16) void {
+fn ldy(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
-    self.y = op;
-    self.update_nz_flags(op);
+    cpu.y = op;
+    cpu.update_nz_flags(op);
 }
 
 /// Stores a value from the CPU's A register in memory
-fn sta(self: *CPU, op: u16) void {
-    self.writeByte(op, self.a);
+fn sta(cpu: *CPU, op: u16) void {
+    cpu.writeByte(op, cpu.a);
 }
 
 /// Stores a value from the CPU's X register in memory
-fn stx(self: *CPU, op: u16) void {
-    self.writeByte(op, self.x);
+fn stx(cpu: *CPU, op: u16) void {
+    cpu.writeByte(op, cpu.x);
 }
 
 /// Stores a value from the CPU's Y register in memory
-fn sty(self: *CPU, op: u16) void {
-    self.writeByte(op, self.y);
+fn sty(cpu: *CPU, op: u16) void {
+    cpu.writeByte(op, cpu.y);
 }
 
 /// Transfers the CPU's A register to its X register
-fn tax(self: *CPU, op: u16) void {
+fn tax(cpu: *CPU, op: u16) void {
     _ = op;
-    self.x = self.a;
-    self.update_nz_flags(self.x);
+    cpu.x = cpu.a;
+    cpu.update_nz_flags(cpu.x);
 }
 
 /// Transfers the CPU's A register to its Y register
-fn tay(self: *CPU, op: u16) void {
+fn tay(cpu: *CPU, op: u16) void {
     _ = op;
-    self.y = self.a;
-    self.update_nz_flags(self.y);
+    cpu.y = cpu.a;
+    cpu.update_nz_flags(cpu.y);
 }
 
 /// Transfers the CPU's stack pointer to its X register
-fn tsx(self: *CPU, op: u16) void {
+fn tsx(cpu: *CPU, op: u16) void {
     _ = op;
-    self.x = self.sp;
-    self.update_nz_flags(self.x);
+    cpu.x = cpu.sp;
+    cpu.update_nz_flags(cpu.x);
 }
 
 /// Transfers the CPU's X register to its A register
-fn txa(self: *CPU, op: u16) void {
+fn txa(cpu: *CPU, op: u16) void {
     _ = op;
-    self.a = self.x;
-    self.update_nz_flags(self.a);
+    cpu.a = cpu.x;
+    cpu.update_nz_flags(cpu.a);
 }
 
 /// Transfers the CPU's X register to its stack pointer
-fn txs(self: *CPU, op: u16) void {
+fn txs(cpu: *CPU, op: u16) void {
     _ = op;
-    self.sp = self.x;
-    self.update_nz_flags(self.sp);
+    cpu.sp = cpu.x;
+    cpu.update_nz_flags(cpu.sp);
 }
 
 /// Transfers the CPU's Y register to its A register
-fn tya(self: *CPU, op: u16) void {
+fn tya(cpu: *CPU, op: u16) void {
     _ = op;
-    self.a = self.y;
-    self.update_nz_flags(self.a);
+    cpu.a = cpu.y;
+    cpu.update_nz_flags(cpu.a);
 }
 
 /// Sets the CPU's program counter to a new memory address
-fn jmp(self: *CPU, op: u16) void {
-    self.pc = op;
+fn jmp(cpu: *CPU, op: u16) void {
+    cpu.pc = op;
 }
 
 /// Does nothing
-fn nop(self: *CPU, op: u16) void {
-    _ = self;
+fn nop(cpu: *CPU, op: u16) void {
+    _ = cpu;
     _ = op;
 }
 
 /// Adds a value from memory to the computer with the carry flag
-fn adc(self: *CPU, op16: u16) void {
-    const carry: u8 = if (self.flags.carry) 1 else 0;
-    const result16 = self.a + op16 + carry;
+fn adc(cpu: *CPU, op16: u16) void {
+    const carry: u8 = if (cpu.flags.carry) 1 else 0;
+    const result16 = cpu.a + op16 + carry;
 
     const resultCarry = result16 & (1 << 8);
     const resultSignBit = result16 & (1 << 7);
-    const aSignBit = self.a & (1 << 7);
+    const aSignBit = cpu.a & (1 << 7);
     const opSignBit = op16 & (1 << 7);
 
     const result: u8 = @truncate(result16);
 
     const overflow = (aSignBit == opSignBit) and (aSignBit != resultSignBit);
 
-    self.a = result;
+    cpu.a = result;
 
-    self.flags.carry = resultCarry != 0;
+    cpu.flags.carry = resultCarry != 0;
 
-    self.flags.overflow = overflow;
+    cpu.flags.overflow = overflow;
 
-    self.update_nz_flags(self.a);
+    cpu.update_nz_flags(cpu.a);
 }
 
 /// Subtracts a value from memory to the computer with the carry flag
-fn sbc(self: *CPU, op16: u16) void {
-    adc(self, ~op16 & 0xff);
+fn sbc(cpu: *CPU, op16: u16) void {
+    adc(cpu, ~op16 & 0xff);
 }
 
 /// Initializes the table of instruction metadata at comptime

@@ -980,8 +980,8 @@ test "ADC" {
     var code = [_]u8{
         0xA9, 0x42, // LDA #42
         0x69, 0x10, // ADC #10 ; A = 0x52
-        0x69, 0x30, // ADC #30 ; A = 0x82 ; V
-        0x69, 0x80, // ADC #80 ; A = 0x02 ; V, C
+        0x69, 0x30, // ADC #30 ; A = 0x82, V
+        0x69, 0x80, // ADC #80 ; A = 0x02, V, C
         0x69, 0x00, // ADC #00 ; A = 0x03 since C is set
     };
 
@@ -1027,7 +1027,7 @@ test "SBC" {
     var code = [_]u8{
         // ; SEC not yet implemented, will be manually done
         0xA9, 0x42, // LDA #42
-        0xE9, 0x40, // SBC #40 ; A = 0x02 ; C
+        0xE9, 0x40, // SBC #40 ; A = 0x02, C
     };
 
     try cpu.loadCode(0x2000, &code);

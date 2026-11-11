@@ -161,6 +161,54 @@ fn sbc(cpu: *CPU, op16: u16) void {
     adc(cpu, ~op16 & 0xff);
 }
 
+/// Increments a value in memory by 1
+fn inc(cpu: *CPU, op: u16) void {
+    const newValue = cpu.readByte(op) +% 1;
+    cpu.writeByte(op, newValue);
+
+    cpu.update_nz_flags(newValue);
+}
+
+/// Increments the CPU's X register by 1
+fn inx(cpu: *CPU, op: u16) void {
+    _ = op;
+    cpu.x = cpu.x +% 1;
+
+    cpu.update_nz_flags(cpu.x);
+}
+
+/// Increments the CPU's Y register by 1
+fn iny(cpu: *CPU, op: u16) void {
+    _ = op;
+    cpu.y = cpu.y +% 1;
+
+    cpu.update_nz_flags(cpu.y);
+}
+
+/// Decrements a value in memory by 1
+fn dec(cpu: *CPU, op: u16) void {
+    const newValue = cpu.readByte(op) -% 1;
+    cpu.writeByte(op, newValue);
+
+    cpu.update_nz_flags(newValue);
+}
+
+/// Decrements the CPU's X register by 1
+fn dex(cpu: *CPU, op: u16) void {
+    _ = op;
+    cpu.x = cpu.x -% 1;
+
+    cpu.update_nz_flags(cpu.x);
+}
+
+/// Decrements the CPU's Y register by 1
+fn dey(cpu: *CPU, op: u16) void {
+    _ = op;
+    cpu.y = cpu.y -% 1;
+
+    cpu.update_nz_flags(cpu.y);
+}
+
 /// Initializes the table of instruction metadata at comptime
 fn initTable() [256]InstructionMetadata {
     var table: [256]InstructionMetadata = undefined;
@@ -649,6 +697,108 @@ fn initTable() [256]InstructionMetadata {
         .handler = &sbc,
     };
 
+    // INC:
+    table[0xE6] = .{
+        .mnemonic = "INC",
+        .addressing_mode = .zero_page,
+        .operand_type = .address,
+        .cycles = 5,
+        .handler = &inc,
+    };
+
+    table[0xF6] = .{
+        .mnemonic = "INC",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &inc,
+    };
+
+    table[0xEE] = .{
+        .mnemonic = "INC",
+        .addressing_mode = .absolute,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &inc,
+    };
+
+    table[0xFE] = .{
+        .mnemonic = "INC",
+        .addressing_mode = .absolute_x,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &inc,
+    };
+
+    // INX:
+    table[0xE8] = .{
+        .mnemonic = "INX",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &inx,
+    };
+
+    // INY:
+    table[0xC8] = .{
+        .mnemonic = "INY",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &iny,
+    };
+
+    // DEC:
+    table[0xC6] = .{
+        .mnemonic = "DEC",
+        .addressing_mode = .zero_page,
+        .operand_type = .address,
+        .cycles = 5,
+        .handler = &dec,
+    };
+
+    table[0xD6] = .{
+        .mnemonic = "DEC",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &dec,
+    };
+
+    table[0xCE] = .{
+        .mnemonic = "DEC",
+        .addressing_mode = .absolute,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &dec,
+    };
+
+    table[0xDE] = .{
+        .mnemonic = "DEC",
+        .addressing_mode = .absolute_x,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &dec,
+    };
+
+    // DEX:
+    table[0xCA] = .{
+        .mnemonic = "DEX",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &dex,
+    };
+
+    // DEY:
+    table[0x88] = .{
+        .mnemonic = "DEY",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &dey,
+    };
+
     return table;
 }
 
@@ -1042,4 +1192,130 @@ test "SBC" {
     try expectEqual(0x02, cpu.a);
     try expect(!cpu.flags.overflow);
     try expect(cpu.flags.carry);
+}
+
+test "INC" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xE6, 0x42, // INC $42
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.writeByte(0x0042, 0xaa);
+
+    _ = try cpu.step();
+    try expectEqual(0x2002, cpu.pc);
+    try expectEqual(0xab, cpu.readByte(0x42));
+}
+
+test "INX" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xE8, // INX
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.x = 0xaa;
+
+    _ = try cpu.step();
+    try expectEqual(0x2001, cpu.pc);
+    try expectEqual(0xab, cpu.x);
+}
+
+test "INY" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xC8, // INY
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.y = 0xaa;
+
+    _ = try cpu.step();
+    try expectEqual(0x2001, cpu.pc);
+    try expectEqual(0xab, cpu.y);
+}
+
+test "DEC" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xC6, 0x42, // DEC $42
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.writeByte(0x0042, 0xaa);
+
+    _ = try cpu.step();
+    try expectEqual(0x2002, cpu.pc);
+    try expectEqual(0xa9, cpu.readByte(0x42));
+}
+
+test "DEX" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xCA, // DEX
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.x = 0xaa;
+
+    _ = try cpu.step();
+    try expectEqual(0x2001, cpu.pc);
+    try expectEqual(0xa9, cpu.x);
+}
+
+test "DEY" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0x88, // DEY
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.y = 0xaa;
+
+    _ = try cpu.step();
+    try expectEqual(0x2001, cpu.pc);
+    try expectEqual(0xa9, cpu.y);
 }

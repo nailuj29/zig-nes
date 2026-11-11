@@ -1,7 +1,7 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const instructions = @import("./instructions.zig");
+const instructions = @import("./instructions/table.zig");
 const instruction_table = instructions.instruction_table;
 const AddressMode = instructions.AddressMode;
 const OperandType = instructions.OperandType;

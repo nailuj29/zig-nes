@@ -3,6 +3,7 @@ const std = @import("std");
 
 const regs = @import("./regs.zig");
 const math = @import("./math.zig");
+const bits = @import("./bits.zig");
 
 /// Possible addressing modes for an instruction
 pub const AddressMode = enum {
@@ -646,6 +647,71 @@ fn initTable() [256]InstructionMetadata {
         .operand_type = .none,
         .cycles = 2,
         .handler = &math.dey,
+    };
+
+    // AND:
+    table[0x29] = .{
+        .mnemonic = "AND",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &bits.and_op,
+    };
+
+    table[0x25] = .{
+        .mnemonic = "AND",
+        .addressing_mode = .zero_page,
+        .operand_type = .value,
+        .cycles = 3,
+        .handler = &bits.and_op,
+    };
+
+    table[0x35] = .{
+        .mnemonic = "AND",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &bits.and_op,
+    };
+
+    table[0x2D] = .{
+        .mnemonic = "AND",
+        .addressing_mode = .absolute,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &bits.and_op,
+    };
+
+    table[0x3D] = .{
+        .mnemonic = "AND",
+        .addressing_mode = .absolute_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &bits.and_op,
+    };
+
+    table[0x39] = .{
+        .mnemonic = "AND",
+        .addressing_mode = .absolute_y,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &bits.and_op,
+    };
+
+    table[0x21] = .{
+        .mnemonic = "AND",
+        .addressing_mode = .indirect_x,
+        .operand_type = .value,
+        .cycles = 6,
+        .handler = &bits.and_op,
+    };
+
+    table[0x31] = .{
+        .mnemonic = "AND",
+        .addressing_mode = .indirect_y,
+        .operand_type = .value,
+        .cycles = 5,
+        .handler = &bits.and_op,
     };
 
     return table;

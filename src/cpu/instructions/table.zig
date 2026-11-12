@@ -714,6 +714,71 @@ fn initTable() [256]InstructionMetadata {
         .handler = &bits.and_op,
     };
 
+    // ORA
+    table[0x09] = .{
+        .mnemonic = "ORA",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &bits.ora,
+    };
+
+    table[0x05] = .{
+        .mnemonic = "ORA",
+        .addressing_mode = .zero_page,
+        .operand_type = .value,
+        .cycles = 3,
+        .handler = &bits.ora,
+    };
+
+    table[0x15] = .{
+        .mnemonic = "ORA",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &bits.ora,
+    };
+
+    table[0x0D] = .{
+        .mnemonic = "ORA",
+        .addressing_mode = .absolute,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &bits.ora,
+    };
+
+    table[0x1D] = .{
+        .mnemonic = "ORA",
+        .addressing_mode = .absolute_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &bits.ora,
+    };
+
+    table[0x19] = .{
+        .mnemonic = "ORA",
+        .addressing_mode = .absolute_y,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &bits.ora,
+    };
+
+    table[0x01] = .{
+        .mnemonic = "ORA",
+        .addressing_mode = .indirect_x,
+        .operand_type = .value,
+        .cycles = 6,
+        .handler = &bits.ora,
+    };
+
+    table[0x11] = .{
+        .mnemonic = "ORA",
+        .addressing_mode = .indirect_y,
+        .operand_type = .value,
+        .cycles = 5,
+        .handler = &bits.ora,
+    };
+
     return table;
 }
 

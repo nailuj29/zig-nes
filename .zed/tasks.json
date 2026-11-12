@@ -1,0 +1,8 @@
+[
+  {
+    "label": "zig build test (filtered)",
+    "command": "zig",
+    "args": ["build", "test", "--", "--test-filter", "$ZED_CUSTOM_ZIG_TEST_NAME"],
+    "tags": ["zig-test"]
+  }
+]

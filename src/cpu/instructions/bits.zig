@@ -46,7 +46,7 @@ test "ORA" {
 
     var code = [_]u8{
         0xA9, 0x00, // LDA #00
-        0x09, 0xAA, // AND #AA ; A = 0xaa
+        0x09, 0xAA, // ORA #AA ; A = 0xaa
     };
 
     try cpu.loadCode(0x2000, &code);

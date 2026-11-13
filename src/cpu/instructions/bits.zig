@@ -192,7 +192,7 @@ test "ASL (acc)" {
     try expect(cpu.flags.carry);
 }
 
-test "ASL" {
+test "ASL (mem)" {
     const gpa = std.testing.allocator;
     const expectEqual = std.testing.expectEqual;
     const expect = std.testing.expect;
@@ -241,7 +241,7 @@ test "LSR (acc)" {
     try expect(cpu.flags.carry);
 }
 
-test "LSR" {
+test "LSR (mem)" {
     const gpa = std.testing.allocator;
     const expectEqual = std.testing.expectEqual;
     const expect = std.testing.expect;
@@ -290,7 +290,7 @@ test "ROL (acc)" {
     try expect(cpu.flags.carry);
 }
 
-test "ROL" {
+test "ROL (mem)" {
     const gpa = std.testing.allocator;
     const expectEqual = std.testing.expectEqual;
     const expect = std.testing.expect;
@@ -339,7 +339,7 @@ test "ROR (acc)" {
     try expect(cpu.flags.carry);
 }
 
-test "ROR" {
+test "ROR (mem)" {
     const gpa = std.testing.allocator;
     const expectEqual = std.testing.expectEqual;
     const expect = std.testing.expect;

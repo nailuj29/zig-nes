@@ -61,7 +61,7 @@ pub fn rol(cpu: *CPU, op: u16) void {
     cpu.flags.carry = (value & 0b10000000) != 0;
     value <<= 1;
     if (cpu.flags.carry) {
-        value |= 0x1;
+        value |= 0b00000001;
     }
     cpu.writeByte(op, value);
 
@@ -73,7 +73,7 @@ pub fn rol_acc(cpu: *CPU, op: u16) void {
     cpu.flags.carry = (cpu.a & 0b10000000) != 0;
     cpu.a <<= 1;
     if (cpu.flags.carry) {
-        cpu.a |= 0x1;
+        cpu.a |= 0b00000001;
     }
 
     cpu.update_nz_flags(cpu.a);

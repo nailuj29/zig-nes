@@ -714,7 +714,7 @@ fn initTable() [256]InstructionMetadata {
         .handler = &bits.and_op,
     };
 
-    // ORA
+    // ORA:
     table[0x09] = .{
         .mnemonic = "ORA",
         .addressing_mode = .immediate,
@@ -779,7 +779,7 @@ fn initTable() [256]InstructionMetadata {
         .handler = &bits.ora,
     };
 
-    // EOR
+    // EOR:
     table[0x49] = .{
         .mnemonic = "EOR",
         .addressing_mode = .immediate,
@@ -842,6 +842,47 @@ fn initTable() [256]InstructionMetadata {
         .operand_type = .value,
         .cycles = 5,
         .handler = &bits.eor,
+    };
+
+    // ASL:
+    table[0x0A] = .{
+        .mnemonic = "ASL",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &bits.asl_acc,
+    };
+
+    table[0x06] = .{
+        .mnemonic = "ASL",
+        .addressing_mode = .zero_page,
+        .operand_type = .address,
+        .cycles = 5,
+        .handler = &bits.asl,
+    };
+
+    table[0x16] = .{
+        .mnemonic = "ASL",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .address,
+        .cycles = 5,
+        .handler = &bits.asl,
+    };
+
+    table[0x0E] = .{
+        .mnemonic = "ASL",
+        .addressing_mode = .absolute,
+        .operand_type = .address,
+        .cycles = 5,
+        .handler = &bits.asl,
+    };
+
+    table[0x1E] = .{
+        .mnemonic = "ASL",
+        .addressing_mode = .absolute_x,
+        .operand_type = .address,
+        .cycles = 5,
+        .handler = &bits.asl,
     };
 
     return table;

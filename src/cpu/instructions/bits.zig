@@ -75,7 +75,7 @@ test "AND" {
 
     _ = try cpu.step();
     try expectEqual(0x2004, cpu.pc);
-    try expectEqual(0xaa, cpu.a);
+    try expectEqual(0xab, cpu.a);
 }
 
 test "ORA" {

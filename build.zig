@@ -119,11 +119,18 @@ pub fn build(b: *std.Build) void {
     // command itself, like this: `zig build run -- arg1 arg2 etc`
     run_cmd.addPassthruArgs();
 
+    const test_filters = b.option(
+        []const []const u8,
+        "test-filter",
+        "Skip tests not matching the filter",
+    ) orelse &[0][]const u8{};
+
     // Creates an executable that will run `test` blocks from the provided module.
     // Here `mod` needs to define a target, which is why earlier we made sure to
     // set the releative field.
     const mod_tests = b.addTest(.{
         .root_module = mod,
+        .filters = test_filters,
     });
 
     // A run step that will run the test executable.
@@ -134,6 +141,7 @@ pub fn build(b: *std.Build) void {
     // hence why we have to create two separate ones.
     const exe_tests = b.addTest(.{
         .root_module = exe.root_module,
+        .filters = test_filters,
     });
 
     // A run step that will run the second test executable.
@@ -141,6 +149,7 @@ pub fn build(b: *std.Build) void {
 
     const cpu_mod_tests = b.addTest(.{
         .root_module = cpu_mod,
+        .filters = test_filters,
     });
 
     const run_cpu_tests = b.addRunArtifact(cpu_mod_tests);

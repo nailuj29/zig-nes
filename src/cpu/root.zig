@@ -452,3 +452,7 @@ test "Zero and negative flags" {
     cpu.update_nz_flags(255); // -1 in 2's complement
     try expect(cpu.flags.negative);
 }
+
+test {
+    _ = @import("./instructions/table.zig");
+}

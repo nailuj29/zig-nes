@@ -969,3 +969,9 @@ test "JMP" {
     try expectEqual(3, cycle_count);
     try expectEqual(0x4200, cpu.pc);
 }
+
+test {
+    _ = @import("./regs.zig");
+    _ = @import("./math.zig");
+    _ = @import("./bits.zig");
+}

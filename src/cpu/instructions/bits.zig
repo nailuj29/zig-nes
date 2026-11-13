@@ -39,6 +39,23 @@ pub fn asl_acc(cpu: *CPU, op: u16) void {
     cpu.update_nz_flags(cpu.a);
 }
 
+pub fn lsr(cpu: *CPU, op: u16) void {
+    var value = cpu.readByte(op);
+    cpu.flags.carry = (value & 0b00000001) != 0;
+    value >>= 1;
+    cpu.writeByte(op, value);
+
+    cpu.update_nz_flags(value);
+}
+
+pub fn lsr_acc(cpu: *CPU, op: u16) void {
+    _ = op;
+    cpu.flags.carry = (cpu.a & 0b00000001) != 0;
+    cpu.a >>= 1;
+
+    cpu.update_nz_flags(cpu.a);
+}
+
 test "AND" {
     const gpa = std.testing.allocator;
     const expectEqual = std.testing.expectEqual;
@@ -151,5 +168,54 @@ test "ASL" {
     _ = try cpu.step();
     try expectEqual(0x2006, cpu.pc);
     try expectEqual(0xFE, cpu.readByte(0x80));
+    try expect(cpu.flags.carry);
+}
+
+test "LSR (acc)" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+    const expect = std.testing.expect;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA9, 0xFF, // LDA #FF
+        0x4A, // LSR A ; A = 0x7F, C
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step();
+
+    _ = try cpu.step();
+    try expectEqual(0x2003, cpu.pc);
+    try expectEqual(0x7F, cpu.a);
+    try expect(cpu.flags.carry);
+}
+
+test "LSR" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+    const expect = std.testing.expect;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA9, 0xFF, // LDA #FF
+        0x85, 0x80, // STA $80
+        0x46, 0x80, // LSR $80 ; *$80 = 0x7F, C
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step();
+    _ = try cpu.step();
+    _ = try cpu.step();
+    try expectEqual(0x2006, cpu.pc);
+    try expectEqual(0x7F, cpu.readByte(0x80));
     try expect(cpu.flags.carry);
 }

@@ -865,7 +865,7 @@ fn initTable() [256]InstructionMetadata {
         .mnemonic = "ASL",
         .addressing_mode = .zero_page_x,
         .operand_type = .address,
-        .cycles = 5,
+        .cycles = 6,
         .handler = &bits.asl,
     };
 
@@ -873,7 +873,7 @@ fn initTable() [256]InstructionMetadata {
         .mnemonic = "ASL",
         .addressing_mode = .absolute,
         .operand_type = .address,
-        .cycles = 5,
+        .cycles = 6,
         .handler = &bits.asl,
     };
 
@@ -881,8 +881,49 @@ fn initTable() [256]InstructionMetadata {
         .mnemonic = "ASL",
         .addressing_mode = .absolute_x,
         .operand_type = .address,
-        .cycles = 5,
+        .cycles = 7,
         .handler = &bits.asl,
+    };
+
+    // LSR:
+    table[0x4A] = .{
+        .mnemonic = "LSR",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &bits.lsr_acc,
+    };
+
+    table[0x46] = .{
+        .mnemonic = "LSR",
+        .addressing_mode = .zero_page,
+        .operand_type = .address,
+        .cycles = 5,
+        .handler = &bits.lsr,
+    };
+
+    table[0x56] = .{
+        .mnemonic = "LSR",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &bits.lsr,
+    };
+
+    table[0x4E] = .{
+        .mnemonic = "LSR",
+        .addressing_mode = .absolute,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &bits.lsr,
+    };
+
+    table[0x5E] = .{
+        .mnemonic = "LSR",
+        .addressing_mode = .absolute_x,
+        .operand_type = .address,
+        .cycles = 7,
+        .handler = &bits.lsr,
     };
 
     return table;

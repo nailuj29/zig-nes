@@ -926,6 +926,88 @@ fn initTable() [256]InstructionMetadata {
         .handler = &bits.lsr,
     };
 
+    // ROL:
+    table[0x2A] = .{
+        .mnemonic = "ROL",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &bits.rol_acc,
+    };
+
+    table[0x26] = .{
+        .mnemonic = "ROL",
+        .addressing_mode = .zero_page,
+        .operand_type = .address,
+        .cycles = 5,
+        .handler = &bits.rol,
+    };
+
+    table[0x36] = .{
+        .mnemonic = "ROL",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &bits.rol,
+    };
+
+    table[0x2E] = .{
+        .mnemonic = "ROL",
+        .addressing_mode = .absolute,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &bits.rol,
+    };
+
+    table[0x3E] = .{
+        .mnemonic = "ROL",
+        .addressing_mode = .absolute_x,
+        .operand_type = .address,
+        .cycles = 7,
+        .handler = &bits.rol,
+    };
+
+    // ROR:
+    table[0x6A] = .{
+        .mnemonic = "ROR",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &bits.ror_acc,
+    };
+
+    table[0x66] = .{
+        .mnemonic = "ROR",
+        .addressing_mode = .zero_page,
+        .operand_type = .address,
+        .cycles = 5,
+        .handler = &bits.ror,
+    };
+
+    table[0x76] = .{
+        .mnemonic = "ROR",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &bits.ror,
+    };
+
+    table[0x6E] = .{
+        .mnemonic = "ROR",
+        .addressing_mode = .absolute,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &bits.ror,
+    };
+
+    table[0x7E] = .{
+        .mnemonic = "ROR",
+        .addressing_mode = .absolute_x,
+        .operand_type = .address,
+        .cycles = 7,
+        .handler = &bits.ror,
+    };
+
     return table;
 }
 

@@ -56,6 +56,52 @@ pub fn lsr_acc(cpu: *CPU, op: u16) void {
     cpu.update_nz_flags(cpu.a);
 }
 
+pub fn rol(cpu: *CPU, op: u16) void {
+    var value = cpu.readByte(op);
+    cpu.flags.carry = (value & 0b10000000) != 0;
+    value <<= 1;
+    if (cpu.flags.carry) {
+        value |= 0x1;
+    }
+    cpu.writeByte(op, value);
+
+    cpu.update_nz_flags(value);
+}
+
+pub fn rol_acc(cpu: *CPU, op: u16) void {
+    _ = op;
+    cpu.flags.carry = (cpu.a & 0b10000000) != 0;
+    cpu.a <<= 1;
+    if (cpu.flags.carry) {
+        cpu.a |= 0x1;
+    }
+
+    cpu.update_nz_flags(cpu.a);
+}
+
+pub fn ror(cpu: *CPU, op: u16) void {
+    var value = cpu.readByte(op);
+    cpu.flags.carry = (value & 0b00000001) != 0;
+    value >>= 1;
+    if (cpu.flags.carry) {
+        value |= 0b10000000;
+    }
+    cpu.writeByte(op, value);
+
+    cpu.update_nz_flags(value);
+}
+
+pub fn ror_acc(cpu: *CPU, op: u16) void {
+    _ = op;
+    cpu.flags.carry = (cpu.a & 0b00000001) != 0;
+    cpu.a >>= 1;
+    if (cpu.flags.carry) {
+        cpu.a |= 0b10000000;
+    }
+
+    cpu.update_nz_flags(cpu.a);
+}
+
 test "AND" {
     const gpa = std.testing.allocator;
     const expectEqual = std.testing.expectEqual;
@@ -217,5 +263,103 @@ test "LSR" {
     _ = try cpu.step();
     try expectEqual(0x2006, cpu.pc);
     try expectEqual(0x7F, cpu.readByte(0x80));
+    try expect(cpu.flags.carry);
+}
+
+test "ROL (acc)" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+    const expect = std.testing.expect;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA9, 0x81, // LDA #81
+        0x2A, // ROL A ; A = 0x03, C
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step();
+
+    _ = try cpu.step();
+    try expectEqual(0x2003, cpu.pc);
+    try expectEqual(0x03, cpu.a);
+    try expect(cpu.flags.carry);
+}
+
+test "ROL" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+    const expect = std.testing.expect;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA9, 0x81, // LDA #81
+        0x85, 0x80, // STA $80
+        0x26, 0x80, // ROL $80 ; *$80 = 0x03, C
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step();
+    _ = try cpu.step();
+    _ = try cpu.step();
+    try expectEqual(0x2006, cpu.pc);
+    try expectEqual(0x03, cpu.readByte(0x80));
+    try expect(cpu.flags.carry);
+}
+
+test "ROR (acc)" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+    const expect = std.testing.expect;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA9, 0x81, // LDA #81
+        0x6A, // ROR A ; A = 0xC0, C
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step();
+
+    _ = try cpu.step();
+    try expectEqual(0x2003, cpu.pc);
+    try expectEqual(0xC0, cpu.a);
+    try expect(cpu.flags.carry);
+}
+
+test "ROR" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+    const expect = std.testing.expect;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA9, 0x81, // LDA #81
+        0x85, 0x80, // STA $80
+        0x66, 0x80, // ROR $80 ; *$80 = 0xC0, C
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step();
+    _ = try cpu.step();
+    _ = try cpu.step();
+    try expectEqual(0x2006, cpu.pc);
+    try expectEqual(0xC0, cpu.readByte(0x80));
     try expect(cpu.flags.carry);
 }

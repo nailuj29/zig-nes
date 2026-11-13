@@ -779,6 +779,71 @@ fn initTable() [256]InstructionMetadata {
         .handler = &bits.ora,
     };
 
+    // EOR
+    table[0x49] = .{
+        .mnemonic = "EOR",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &bits.eor,
+    };
+
+    table[0x45] = .{
+        .mnemonic = "EOR",
+        .addressing_mode = .zero_page,
+        .operand_type = .value,
+        .cycles = 3,
+        .handler = &bits.eor,
+    };
+
+    table[0x55] = .{
+        .mnemonic = "EOR",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &bits.eor,
+    };
+
+    table[0x4D] = .{
+        .mnemonic = "EOR",
+        .addressing_mode = .absolute,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &bits.eor,
+    };
+
+    table[0x5D] = .{
+        .mnemonic = "EOR",
+        .addressing_mode = .absolute_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &bits.eor,
+    };
+
+    table[0x59] = .{
+        .mnemonic = "EOR",
+        .addressing_mode = .absolute_y,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &bits.eor,
+    };
+
+    table[0x41] = .{
+        .mnemonic = "EOR",
+        .addressing_mode = .indirect_x,
+        .operand_type = .value,
+        .cycles = 6,
+        .handler = &bits.eor,
+    };
+
+    table[0x51] = .{
+        .mnemonic = "EOR",
+        .addressing_mode = .indirect_y,
+        .operand_type = .value,
+        .cycles = 5,
+        .handler = &bits.eor,
+    };
+
     return table;
 }
 

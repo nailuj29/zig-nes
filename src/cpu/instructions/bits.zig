@@ -1,8 +1,370 @@
 const CPU = @import("../root.zig").CPU;
+const InstructionMetadata = @import("./table.zig").InstructionMetadata;
 const std = @import("std");
 
+pub fn register(table: *[256]InstructionMetadata) void {
+    // AND:
+    table[0x29] = .{
+        .mnemonic = "AND",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &and_op,
+    };
+
+    table[0x25] = .{
+        .mnemonic = "AND",
+        .addressing_mode = .zero_page,
+        .operand_type = .value,
+        .cycles = 3,
+        .handler = &and_op,
+    };
+
+    table[0x35] = .{
+        .mnemonic = "AND",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &and_op,
+    };
+
+    table[0x2D] = .{
+        .mnemonic = "AND",
+        .addressing_mode = .absolute,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &and_op,
+    };
+
+    table[0x3D] = .{
+        .mnemonic = "AND",
+        .addressing_mode = .absolute_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &and_op,
+    };
+
+    table[0x39] = .{
+        .mnemonic = "AND",
+        .addressing_mode = .absolute_y,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &and_op,
+    };
+
+    table[0x21] = .{
+        .mnemonic = "AND",
+        .addressing_mode = .indirect_x,
+        .operand_type = .value,
+        .cycles = 6,
+        .handler = &and_op,
+    };
+
+    table[0x31] = .{
+        .mnemonic = "AND",
+        .addressing_mode = .indirect_y,
+        .operand_type = .value,
+        .cycles = 5,
+        .handler = &and_op,
+    };
+
+    // ORA:
+    table[0x09] = .{
+        .mnemonic = "ORA",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &ora,
+    };
+
+    table[0x05] = .{
+        .mnemonic = "ORA",
+        .addressing_mode = .zero_page,
+        .operand_type = .value,
+        .cycles = 3,
+        .handler = &ora,
+    };
+
+    table[0x15] = .{
+        .mnemonic = "ORA",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &ora,
+    };
+
+    table[0x0D] = .{
+        .mnemonic = "ORA",
+        .addressing_mode = .absolute,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &ora,
+    };
+
+    table[0x1D] = .{
+        .mnemonic = "ORA",
+        .addressing_mode = .absolute_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &ora,
+    };
+
+    table[0x19] = .{
+        .mnemonic = "ORA",
+        .addressing_mode = .absolute_y,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &ora,
+    };
+
+    table[0x01] = .{
+        .mnemonic = "ORA",
+        .addressing_mode = .indirect_x,
+        .operand_type = .value,
+        .cycles = 6,
+        .handler = &ora,
+    };
+
+    table[0x11] = .{
+        .mnemonic = "ORA",
+        .addressing_mode = .indirect_y,
+        .operand_type = .value,
+        .cycles = 5,
+        .handler = &ora,
+    };
+
+    // EOR:
+    table[0x49] = .{
+        .mnemonic = "EOR",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &eor,
+    };
+
+    table[0x45] = .{
+        .mnemonic = "EOR",
+        .addressing_mode = .zero_page,
+        .operand_type = .value,
+        .cycles = 3,
+        .handler = &eor,
+    };
+
+    table[0x55] = .{
+        .mnemonic = "EOR",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &eor,
+    };
+
+    table[0x4D] = .{
+        .mnemonic = "EOR",
+        .addressing_mode = .absolute,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &eor,
+    };
+
+    table[0x5D] = .{
+        .mnemonic = "EOR",
+        .addressing_mode = .absolute_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &eor,
+    };
+
+    table[0x59] = .{
+        .mnemonic = "EOR",
+        .addressing_mode = .absolute_y,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &eor,
+    };
+
+    table[0x41] = .{
+        .mnemonic = "EOR",
+        .addressing_mode = .indirect_x,
+        .operand_type = .value,
+        .cycles = 6,
+        .handler = &eor,
+    };
+
+    table[0x51] = .{
+        .mnemonic = "EOR",
+        .addressing_mode = .indirect_y,
+        .operand_type = .value,
+        .cycles = 5,
+        .handler = &eor,
+    };
+
+    // ASL:
+    table[0x0A] = .{
+        .mnemonic = "ASL",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &asl_acc,
+    };
+
+    table[0x06] = .{
+        .mnemonic = "ASL",
+        .addressing_mode = .zero_page,
+        .operand_type = .address,
+        .cycles = 5,
+        .handler = &asl,
+    };
+
+    table[0x16] = .{
+        .mnemonic = "ASL",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &asl,
+    };
+
+    table[0x0E] = .{
+        .mnemonic = "ASL",
+        .addressing_mode = .absolute,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &asl,
+    };
+
+    table[0x1E] = .{
+        .mnemonic = "ASL",
+        .addressing_mode = .absolute_x,
+        .operand_type = .address,
+        .cycles = 7,
+        .handler = &asl,
+    };
+
+    // LSR:
+    table[0x4A] = .{
+        .mnemonic = "LSR",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &lsr_acc,
+    };
+
+    table[0x46] = .{
+        .mnemonic = "LSR",
+        .addressing_mode = .zero_page,
+        .operand_type = .address,
+        .cycles = 5,
+        .handler = &lsr,
+    };
+
+    table[0x56] = .{
+        .mnemonic = "LSR",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &lsr,
+    };
+
+    table[0x4E] = .{
+        .mnemonic = "LSR",
+        .addressing_mode = .absolute,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &lsr,
+    };
+
+    table[0x5E] = .{
+        .mnemonic = "LSR",
+        .addressing_mode = .absolute_x,
+        .operand_type = .address,
+        .cycles = 7,
+        .handler = &lsr,
+    };
+
+    // ROL:
+    table[0x2A] = .{
+        .mnemonic = "ROL",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &rol_acc,
+    };
+
+    table[0x26] = .{
+        .mnemonic = "ROL",
+        .addressing_mode = .zero_page,
+        .operand_type = .address,
+        .cycles = 5,
+        .handler = &rol,
+    };
+
+    table[0x36] = .{
+        .mnemonic = "ROL",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &rol,
+    };
+
+    table[0x2E] = .{
+        .mnemonic = "ROL",
+        .addressing_mode = .absolute,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &rol,
+    };
+
+    table[0x3E] = .{
+        .mnemonic = "ROL",
+        .addressing_mode = .absolute_x,
+        .operand_type = .address,
+        .cycles = 7,
+        .handler = &rol,
+    };
+
+    // ROR:
+    table[0x6A] = .{
+        .mnemonic = "ROR",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &ror_acc,
+    };
+
+    table[0x66] = .{
+        .mnemonic = "ROR",
+        .addressing_mode = .zero_page,
+        .operand_type = .address,
+        .cycles = 5,
+        .handler = &ror,
+    };
+
+    table[0x76] = .{
+        .mnemonic = "ROR",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &ror,
+    };
+
+    table[0x6E] = .{
+        .mnemonic = "ROR",
+        .addressing_mode = .absolute,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &ror,
+    };
+
+    table[0x7E] = .{
+        .mnemonic = "ROR",
+        .addressing_mode = .absolute_x,
+        .operand_type = .address,
+        .cycles = 7,
+        .handler = &ror,
+    };
+}
+
 /// Bitwise ANDs the operand with the A register
-pub fn and_op(cpu: *CPU, op16: u16) void {
+fn and_op(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
     cpu.a = cpu.a & op;
 
@@ -10,7 +372,7 @@ pub fn and_op(cpu: *CPU, op16: u16) void {
 }
 
 /// Bitwise ORs the operand with the A register
-pub fn ora(cpu: *CPU, op16: u16) void {
+fn ora(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
     cpu.a = cpu.a | op;
 
@@ -18,7 +380,7 @@ pub fn ora(cpu: *CPU, op16: u16) void {
 }
 
 /// Bitwise XORs the operand with the A register
-pub fn eor(cpu: *CPU, op16: u16) void {
+fn eor(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
     cpu.a = cpu.a ^ op;
 
@@ -26,7 +388,7 @@ pub fn eor(cpu: *CPU, op16: u16) void {
 }
 
 /// Shifts a value in memory left (filling in 0's from the right)
-pub fn asl(cpu: *CPU, op: u16) void {
+fn asl(cpu: *CPU, op: u16) void {
     var value = cpu.readByte(op);
     cpu.flags.carry = (value & 0b10000000) != 0;
     value <<= 1;
@@ -36,7 +398,7 @@ pub fn asl(cpu: *CPU, op: u16) void {
 }
 
 /// Shifts the value in the accumulator left (filling in 0's from the right)
-pub fn asl_acc(cpu: *CPU, op: u16) void {
+fn asl_acc(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.flags.carry = (cpu.a & 0b10000000) != 0;
     cpu.a <<= 1;
@@ -45,7 +407,7 @@ pub fn asl_acc(cpu: *CPU, op: u16) void {
 }
 
 /// Shifts a value in memory right (filling in 0's from the left)
-pub fn lsr(cpu: *CPU, op: u16) void {
+fn lsr(cpu: *CPU, op: u16) void {
     var value = cpu.readByte(op);
     cpu.flags.carry = (value & 0b00000001) != 0;
     value >>= 1;
@@ -55,7 +417,7 @@ pub fn lsr(cpu: *CPU, op: u16) void {
 }
 
 /// Shifts the value in the accumulator right (filling in 0's from the left)
-pub fn lsr_acc(cpu: *CPU, op: u16) void {
+fn lsr_acc(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.flags.carry = (cpu.a & 0b00000001) != 0;
     cpu.a >>= 1;
@@ -64,7 +426,7 @@ pub fn lsr_acc(cpu: *CPU, op: u16) void {
 }
 
 /// Rotates a value in memory left
-pub fn rol(cpu: *CPU, op: u16) void {
+fn rol(cpu: *CPU, op: u16) void {
     var value = cpu.readByte(op);
     cpu.flags.carry = (value & 0b10000000) != 0;
     value <<= 1;
@@ -77,7 +439,7 @@ pub fn rol(cpu: *CPU, op: u16) void {
 }
 
 /// Rotates the value in the accumulator left
-pub fn rol_acc(cpu: *CPU, op: u16) void {
+fn rol_acc(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.flags.carry = (cpu.a & 0b10000000) != 0;
     cpu.a <<= 1;
@@ -89,7 +451,7 @@ pub fn rol_acc(cpu: *CPU, op: u16) void {
 }
 
 /// Rotates a value in memory right
-pub fn ror(cpu: *CPU, op: u16) void {
+fn ror(cpu: *CPU, op: u16) void {
     var value = cpu.readByte(op);
     cpu.flags.carry = (value & 0b00000001) != 0;
     value >>= 1;
@@ -102,7 +464,7 @@ pub fn ror(cpu: *CPU, op: u16) void {
 }
 
 /// Rotates the value in the accumulator right
-pub fn ror_acc(cpu: *CPU, op: u16) void {
+fn ror_acc(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.flags.carry = (cpu.a & 0b00000001) != 0;
     cpu.a >>= 1;

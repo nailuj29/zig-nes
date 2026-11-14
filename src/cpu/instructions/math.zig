@@ -1,8 +1,358 @@
 const CPU = @import("../root.zig").CPU;
+const InstructionMetadata = @import("./table.zig").InstructionMetadata;
 const std = @import("std");
 
+pub fn register(table: *[256]InstructionMetadata) void {
+    // ADC:
+    table[0x69] = .{
+        .mnemonic = "ADC",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &adc,
+    };
+
+    table[0x65] = .{
+        .mnemonic = "ADC",
+        .addressing_mode = .zero_page,
+        .operand_type = .value,
+        .cycles = 3,
+        .handler = &adc,
+    };
+
+    table[0x75] = .{
+        .mnemonic = "ADC",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &adc,
+    };
+
+    table[0x6D] = .{
+        .mnemonic = "ADC",
+        .addressing_mode = .absolute,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &adc,
+    };
+
+    table[0x7D] = .{
+        .mnemonic = "ADC",
+        .addressing_mode = .absolute_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &adc,
+    };
+
+    table[0x79] = .{
+        .mnemonic = "ADC",
+        .addressing_mode = .absolute_y,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &adc,
+    };
+
+    table[0x61] = .{
+        .mnemonic = "ADC",
+        .addressing_mode = .indirect_x,
+        .operand_type = .value,
+        .cycles = 6,
+        .handler = &adc,
+    };
+
+    table[0x71] = .{
+        .mnemonic = "ADC",
+        .addressing_mode = .indirect_y,
+        .operand_type = .value,
+        .cycles = 5,
+        .handler = &adc,
+    };
+
+    // SBC:
+    table[0xE9] = .{
+        .mnemonic = "SBC",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &sbc,
+    };
+
+    table[0xE5] = .{
+        .mnemonic = "SBC",
+        .addressing_mode = .zero_page,
+        .operand_type = .value,
+        .cycles = 3,
+        .handler = &sbc,
+    };
+
+    table[0xF5] = .{
+        .mnemonic = "SBC",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &sbc,
+    };
+
+    table[0xED] = .{
+        .mnemonic = "SBC",
+        .addressing_mode = .absolute,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &sbc,
+    };
+
+    table[0xFD] = .{
+        .mnemonic = "SBC",
+        .addressing_mode = .absolute_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &sbc,
+    };
+
+    table[0xF9] = .{
+        .mnemonic = "SBC",
+        .addressing_mode = .absolute_y,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &sbc,
+    };
+
+    table[0xE1] = .{
+        .mnemonic = "SBC",
+        .addressing_mode = .indirect_x,
+        .operand_type = .value,
+        .cycles = 6,
+        .handler = &sbc,
+    };
+
+    table[0xF1] = .{
+        .mnemonic = "SBC",
+        .addressing_mode = .indirect_y,
+        .operand_type = .value,
+        .cycles = 5,
+        .handler = &sbc,
+    };
+
+    // INC:
+    table[0xE6] = .{
+        .mnemonic = "INC",
+        .addressing_mode = .zero_page,
+        .operand_type = .address,
+        .cycles = 5,
+        .handler = &inc,
+    };
+
+    table[0xF6] = .{
+        .mnemonic = "INC",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &inc,
+    };
+
+    table[0xEE] = .{
+        .mnemonic = "INC",
+        .addressing_mode = .absolute,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &inc,
+    };
+
+    table[0xFE] = .{
+        .mnemonic = "INC",
+        .addressing_mode = .absolute_x,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &inc,
+    };
+
+    // INX:
+    table[0xE8] = .{
+        .mnemonic = "INX",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &inx,
+    };
+
+    // INY:
+    table[0xC8] = .{
+        .mnemonic = "INY",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &iny,
+    };
+
+    // DEC:
+    table[0xC6] = .{
+        .mnemonic = "DEC",
+        .addressing_mode = .zero_page,
+        .operand_type = .address,
+        .cycles = 5,
+        .handler = &dec,
+    };
+
+    table[0xD6] = .{
+        .mnemonic = "DEC",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &dec,
+    };
+
+    table[0xCE] = .{
+        .mnemonic = "DEC",
+        .addressing_mode = .absolute,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &dec,
+    };
+
+    table[0xDE] = .{
+        .mnemonic = "DEC",
+        .addressing_mode = .absolute_x,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &dec,
+    };
+
+    // DEX:
+    table[0xCA] = .{
+        .mnemonic = "DEX",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &dex,
+    };
+
+    // DEY:
+    table[0x88] = .{
+        .mnemonic = "DEY",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &dey,
+    };
+
+    // CMP:
+    table[0xC9] = .{
+        .mnemonic = "CMP",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &cmp,
+    };
+
+    table[0xC5] = .{
+        .mnemonic = "CMP",
+        .addressing_mode = .zero_page,
+        .operand_type = .value,
+        .cycles = 3,
+        .handler = &cmp,
+    };
+
+    table[0xD5] = .{
+        .mnemonic = "CMP",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &cmp,
+    };
+
+    table[0xCD] = .{
+        .mnemonic = "CMP",
+        .addressing_mode = .absolute,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &cmp,
+    };
+
+    table[0xDD] = .{
+        .mnemonic = "CMP",
+        .addressing_mode = .absolute_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &cmp,
+    };
+
+    table[0xD9] = .{
+        .mnemonic = "CMP",
+        .addressing_mode = .absolute_y,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &cmp,
+    };
+
+    table[0xC1] = .{
+        .mnemonic = "CMP",
+        .addressing_mode = .indirect_x,
+        .operand_type = .value,
+        .cycles = 6,
+        .handler = &cmp,
+    };
+
+    table[0xD1] = .{
+        .mnemonic = "CMP",
+        .addressing_mode = .indirect_y,
+        .operand_type = .value,
+        .cycles = 5,
+        .handler = &cmp,
+    };
+
+    // CPX:
+    table[0xE0] = .{
+        .mnemonic = "CPX",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &cpx,
+    };
+
+    table[0xE4] = .{
+        .mnemonic = "CPX",
+        .addressing_mode = .zero_page,
+        .operand_type = .value,
+        .cycles = 3,
+        .handler = &cpx,
+    };
+
+    table[0xEC] = .{
+        .mnemonic = "CPX",
+        .addressing_mode = .absolute,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &cpx,
+    };
+
+    // CPY:
+    table[0xC0] = .{
+        .mnemonic = "CPY",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &cpy,
+    };
+
+    table[0xC4] = .{
+        .mnemonic = "CPY",
+        .addressing_mode = .zero_page,
+        .operand_type = .value,
+        .cycles = 3,
+        .handler = &cpy,
+    };
+
+    table[0xCC] = .{
+        .mnemonic = "CPY",
+        .addressing_mode = .absolute,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &cpy,
+    };
+}
+
 /// Adds a value from memory to the computer with the carry flag
-pub fn adc(cpu: *CPU, op16: u16) void {
+fn adc(cpu: *CPU, op16: u16) void {
     const carry: u8 = if (cpu.flags.carry) 1 else 0;
     const result16 = cpu.a + op16 + carry;
 
@@ -25,12 +375,12 @@ pub fn adc(cpu: *CPU, op16: u16) void {
 }
 
 /// Subtracts a value from memory to the computer with the carry flag
-pub fn sbc(cpu: *CPU, op16: u16) void {
+fn sbc(cpu: *CPU, op16: u16) void {
     adc(cpu, ~op16 & 0xff);
 }
 
 /// Increments a value in memory by 1
-pub fn inc(cpu: *CPU, op: u16) void {
+fn inc(cpu: *CPU, op: u16) void {
     const newValue = cpu.readByte(op) +% 1;
     cpu.writeByte(op, newValue);
 
@@ -38,7 +388,7 @@ pub fn inc(cpu: *CPU, op: u16) void {
 }
 
 /// Increments the CPU's X register by 1
-pub fn inx(cpu: *CPU, op: u16) void {
+fn inx(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.x = cpu.x +% 1;
 
@@ -46,7 +396,7 @@ pub fn inx(cpu: *CPU, op: u16) void {
 }
 
 /// Increments the CPU's Y register by 1
-pub fn iny(cpu: *CPU, op: u16) void {
+fn iny(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.y = cpu.y +% 1;
 
@@ -54,7 +404,7 @@ pub fn iny(cpu: *CPU, op: u16) void {
 }
 
 /// Decrements a value in memory by 1
-pub fn dec(cpu: *CPU, op: u16) void {
+fn dec(cpu: *CPU, op: u16) void {
     const newValue = cpu.readByte(op) -% 1;
     cpu.writeByte(op, newValue);
 
@@ -62,7 +412,7 @@ pub fn dec(cpu: *CPU, op: u16) void {
 }
 
 /// Decrements the CPU's X register by 1
-pub fn dex(cpu: *CPU, op: u16) void {
+fn dex(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.x = cpu.x -% 1;
 
@@ -70,7 +420,7 @@ pub fn dex(cpu: *CPU, op: u16) void {
 }
 
 /// Decrements the CPU's Y register by 1
-pub fn dey(cpu: *CPU, op: u16) void {
+fn dey(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.y = cpu.y -% 1;
 
@@ -79,7 +429,7 @@ pub fn dey(cpu: *CPU, op: u16) void {
 
 /// Compares a value in the CPU's A register to a value in memory, updating the C, N, and Z flags
 /// according to the difference between the two
-pub fn cmp(cpu: *CPU, op16: u16) void {
+fn cmp(cpu: *CPU, op16: u16) void {
     const result16 = cpu.a + ((~op16 & 0xff) + 1); // Add the 8-bit two's complement to avoid underflows
     const resultCarry = result16 & (1 << 8);
 
@@ -90,7 +440,7 @@ pub fn cmp(cpu: *CPU, op16: u16) void {
 
 /// Compares a value in the CPU's X register to a value in memory, updating the C, N, and Z flags
 /// according to the difference between the two
-pub fn cpx(cpu: *CPU, op16: u16) void {
+fn cpx(cpu: *CPU, op16: u16) void {
     const result16 = cpu.x + ((~op16 & 0xff) + 1); // Add the 8-bit two's complement to avoid underflows
     const resultCarry = result16 & (1 << 8);
 
@@ -101,7 +451,7 @@ pub fn cpx(cpu: *CPU, op16: u16) void {
 
 /// Compares a value in the CPU's Y register to a value in memory, updating the C, N, and Z flags
 /// according to the difference between the two
-pub fn cpy(cpu: *CPU, op16: u16) void {
+fn cpy(cpu: *CPU, op16: u16) void {
     const result16 = cpu.y + ((~op16 & 0xff) + 1); // Add the 8-bit two's complement to avoid underflows
     const resultCarry = result16 & (1 << 8);
 

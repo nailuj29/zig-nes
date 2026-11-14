@@ -1,6 +1,7 @@
 const CPU = @import("../root.zig").CPU;
 const std = @import("std");
 
+/// Bitwise ANDs the operand with the A register
 pub fn and_op(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
     cpu.a = cpu.a & op;
@@ -8,6 +9,7 @@ pub fn and_op(cpu: *CPU, op16: u16) void {
     cpu.update_nz_flags(cpu.a);
 }
 
+/// Bitwise ORs the operand with the A register
 pub fn ora(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
     cpu.a = cpu.a | op;
@@ -15,6 +17,7 @@ pub fn ora(cpu: *CPU, op16: u16) void {
     cpu.update_nz_flags(cpu.a);
 }
 
+/// Bitwise XORs the operand with the A register
 pub fn eor(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
     cpu.a = cpu.a ^ op;
@@ -22,6 +25,7 @@ pub fn eor(cpu: *CPU, op16: u16) void {
     cpu.update_nz_flags(cpu.a);
 }
 
+/// Shifts a value in memory left (filling in 0's from the right)
 pub fn asl(cpu: *CPU, op: u16) void {
     var value = cpu.readByte(op);
     cpu.flags.carry = (value & 0b10000000) != 0;
@@ -31,6 +35,7 @@ pub fn asl(cpu: *CPU, op: u16) void {
     cpu.update_nz_flags(value);
 }
 
+/// Shifts the value in the accumulator left (filling in 0's from the right)
 pub fn asl_acc(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.flags.carry = (cpu.a & 0b10000000) != 0;
@@ -39,6 +44,7 @@ pub fn asl_acc(cpu: *CPU, op: u16) void {
     cpu.update_nz_flags(cpu.a);
 }
 
+/// Shifts a value in memory right (filling in 0's from the left)
 pub fn lsr(cpu: *CPU, op: u16) void {
     var value = cpu.readByte(op);
     cpu.flags.carry = (value & 0b00000001) != 0;
@@ -48,6 +54,7 @@ pub fn lsr(cpu: *CPU, op: u16) void {
     cpu.update_nz_flags(value);
 }
 
+/// Shifts the value in the accumulator right (filling in 0's from the left)
 pub fn lsr_acc(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.flags.carry = (cpu.a & 0b00000001) != 0;
@@ -56,6 +63,7 @@ pub fn lsr_acc(cpu: *CPU, op: u16) void {
     cpu.update_nz_flags(cpu.a);
 }
 
+/// Rotates a value in memory left
 pub fn rol(cpu: *CPU, op: u16) void {
     var value = cpu.readByte(op);
     cpu.flags.carry = (value & 0b10000000) != 0;
@@ -68,6 +76,7 @@ pub fn rol(cpu: *CPU, op: u16) void {
     cpu.update_nz_flags(value);
 }
 
+/// Rotates the value in the accumulator left
 pub fn rol_acc(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.flags.carry = (cpu.a & 0b10000000) != 0;
@@ -79,6 +88,7 @@ pub fn rol_acc(cpu: *CPU, op: u16) void {
     cpu.update_nz_flags(cpu.a);
 }
 
+/// Rotates a value in memory right
 pub fn ror(cpu: *CPU, op: u16) void {
     var value = cpu.readByte(op);
     cpu.flags.carry = (value & 0b00000001) != 0;
@@ -91,6 +101,7 @@ pub fn ror(cpu: *CPU, op: u16) void {
     cpu.update_nz_flags(value);
 }
 
+/// Rotates the value in the accumulator right
 pub fn ror_acc(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.flags.carry = (cpu.a & 0b00000001) != 0;

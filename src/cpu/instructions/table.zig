@@ -1008,6 +1008,121 @@ fn initTable() [256]InstructionMetadata {
         .handler = &bits.ror,
     };
 
+    // CMP:
+    table[0xC9] = .{
+        .mnemonic = "CMP",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &math.cmp,
+    };
+
+    table[0xC5] = .{
+        .mnemonic = "CMP",
+        .addressing_mode = .zero_page,
+        .operand_type = .value,
+        .cycles = 3,
+        .handler = &math.cmp,
+    };
+
+    table[0xD5] = .{
+        .mnemonic = "CMP",
+        .addressing_mode = .zero_page_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &math.cmp,
+    };
+
+    table[0xCD] = .{
+        .mnemonic = "CMP",
+        .addressing_mode = .absolute,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &math.cmp,
+    };
+
+    table[0xDD] = .{
+        .mnemonic = "CMP",
+        .addressing_mode = .absolute_x,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &math.cmp,
+    };
+
+    table[0xD9] = .{
+        .mnemonic = "CMP",
+        .addressing_mode = .absolute_y,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &math.cmp,
+    };
+
+    table[0xC1] = .{
+        .mnemonic = "CMP",
+        .addressing_mode = .indirect_x,
+        .operand_type = .value,
+        .cycles = 6,
+        .handler = &math.cmp,
+    };
+
+    table[0xD1] = .{
+        .mnemonic = "CMP",
+        .addressing_mode = .indirect_y,
+        .operand_type = .value,
+        .cycles = 5,
+        .handler = &math.cmp,
+    };
+
+    // CPX:
+    table[0xE0] = .{
+        .mnemonic = "CPX",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &math.cpx,
+    };
+
+    table[0xE4] = .{
+        .mnemonic = "CPX",
+        .addressing_mode = .zero_page,
+        .operand_type = .value,
+        .cycles = 3,
+        .handler = &math.cpx,
+    };
+
+    table[0xEC] = .{
+        .mnemonic = "CPX",
+        .addressing_mode = .absolute,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &math.cpx,
+    };
+
+    // CPY:
+    table[0xC0] = .{
+        .mnemonic = "CPY",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &math.cpy,
+    };
+
+    table[0xC4] = .{
+        .mnemonic = "CPY",
+        .addressing_mode = .zero_page,
+        .operand_type = .value,
+        .cycles = 3,
+        .handler = &math.cpy,
+    };
+
+    table[0xCC] = .{
+        .mnemonic = "CPY",
+        .addressing_mode = .absolute,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &math.cpy,
+    };
+
     return table;
 }
 

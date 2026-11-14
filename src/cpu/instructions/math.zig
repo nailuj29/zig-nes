@@ -2,6 +2,8 @@ const CPU = @import("../root.zig").CPU;
 const InstructionMetadata = @import("./table.zig").InstructionMetadata;
 const std = @import("std");
 
+/// Loads all instructions handling math operations into the main instruction lookup table
+/// Should be run at compile time
 pub fn register(table: *[256]InstructionMetadata) void {
     // ADC:
     table[0x69] = .{

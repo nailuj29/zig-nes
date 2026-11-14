@@ -322,6 +322,69 @@ pub fn register(table: *[256]InstructionMetadata) void {
         .cycles = 2,
         .handler = &tya,
     };
+
+    // CLC:
+    table[0x18] = .{
+        .mnemonic = "CLC",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &clc,
+    };
+
+    // CLD:
+    table[0xD8] = .{
+        .mnemonic = "CLD",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &cld,
+    };
+
+    // CLI:
+    table[0x58] = .{
+        .mnemonic = "CLI",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &cli,
+    };
+
+    // CLV:
+    table[0xB8] = .{
+        .mnemonic = "CLV",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &clv,
+    };
+
+    // SEC:
+    table[0x38] = .{
+        .mnemonic = "SEC",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &sec,
+    };
+
+    // SED:
+    table[0xF8] = .{
+        .mnemonic = "SED",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &sed,
+    };
+
+    // SEI:
+    table[0x78] = .{
+        .mnemonic = "SEI",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 2,
+        .handler = &sei,
+    };
 }
 
 /// Loads a value into the CPU's A register, updating the negative and zero flags if necessary
@@ -400,6 +463,48 @@ fn tya(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.a = cpu.y;
     cpu.update_nz_flags(cpu.a);
+}
+
+/// Clears the CPU's carry flag
+fn clc(cpu: *CPU, op: u16) void {
+    _ = op;
+    cpu.flags.carry = false;
+}
+
+/// Clears the CPU's decimal flag
+fn cld(cpu: *CPU, op: u16) void {
+    _ = op;
+    cpu.flags.decimal = false;
+}
+
+/// Clears the CPU's interrupt disable flag
+fn cli(cpu: *CPU, op: u16) void {
+    _ = op;
+    cpu.flags.interrupt_disable = false;
+}
+
+/// Clears the CPU's overflow flag
+fn clv(cpu: *CPU, op: u16) void {
+    _ = op;
+    cpu.flags.overflow = false;
+}
+
+/// Sets the CPU's carry flag
+fn sec(cpu: *CPU, op: u16) void {
+    _ = op;
+    cpu.flags.carry = true;
+}
+
+/// Sets the CPU's decimal flag
+fn sed(cpu: *CPU, op: u16) void {
+    _ = op;
+    cpu.flags.decimal = true;
+}
+
+/// Sets the CPU's interrupt disable flag
+fn sei(cpu: *CPU, op: u16) void {
+    _ = op;
+    cpu.flags.interrupt_disable = true;
 }
 
 test "LDA" {
@@ -676,4 +781,158 @@ test "TYA" {
     try expectEqual(2, cycle_count);
     try expectEqual(0x2003, cpu.pc);
     try expectEqual(0x42, cpu.a);
+}
+
+test "CLC" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+    const expect = std.testing.expect;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0x18, // CLC
+    };
+
+    cpu.flags.carry = true;
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step();
+    try expectEqual(0x2001, cpu.pc);
+    try expect(!cpu.flags.carry);
+}
+
+test "CLD" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+    const expect = std.testing.expect;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xD8, // CLD
+    };
+
+    cpu.flags.decimal = true;
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step();
+    try expectEqual(0x2001, cpu.pc);
+    try expect(!cpu.flags.decimal);
+}
+
+test "CLI" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+    const expect = std.testing.expect;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0x58, // CLI
+    };
+
+    cpu.flags.interrupt_disable = true;
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step();
+    try expectEqual(0x2001, cpu.pc);
+    try expect(!cpu.flags.interrupt_disable);
+}
+
+test "CLV" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+    const expect = std.testing.expect;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xB8, // CLV
+    };
+
+    cpu.flags.overflow = true;
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step();
+    try expectEqual(0x2001, cpu.pc);
+    try expect(!cpu.flags.overflow);
+}
+
+test "SEC" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+    const expect = std.testing.expect;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0x38, // SEC
+    };
+
+    cpu.flags.carry = false;
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step();
+    try expectEqual(0x2001, cpu.pc);
+    try expect(cpu.flags.carry);
+}
+
+test "SED" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+    const expect = std.testing.expect;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xF8, // SED
+    };
+
+    cpu.flags.decimal = false;
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step();
+    try expectEqual(0x2001, cpu.pc);
+    try expect(cpu.flags.decimal);
+}
+
+test "SEI" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+    const expect = std.testing.expect;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0x78, // SEI
+    };
+
+    cpu.flags.interrupt_disable = false;
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step();
+    try expectEqual(0x2001, cpu.pc);
+    try expect(cpu.flags.interrupt_disable);
 }

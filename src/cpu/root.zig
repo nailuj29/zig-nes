@@ -7,14 +7,14 @@ const AddressMode = instructions.AddressMode;
 const OperandType = instructions.OperandType;
 
 const CPUFlags = packed struct {
-    negative: bool = false,
-    overflow: bool = false,
-    unused: bool = true,
-    b: bool = false,
-    decimal: bool = false,
-    interrupt_disable: bool = false,
-    zero: bool = false,
     carry: bool = false,
+    zero: bool = false,
+    interrupt_disable: bool = false,
+    decimal: bool = false,
+    brk: bool = false,
+    unused: bool = true,
+    overflow: bool = false,
+    negative: bool = false,
 };
 
 const CPUError = error{

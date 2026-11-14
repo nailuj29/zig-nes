@@ -2,6 +2,8 @@ const CPU = @import("../root.zig").CPU;
 const InstructionMetadata = @import("./table.zig").InstructionMetadata;
 const std = @import("std");
 
+// TODO: all of these instructions have cycle weirdness. handle it eventually PLEASE
+
 /// Loads all instructions handling branching operations into the main instruction lookup table
 ///
 /// Should be run at compile time
@@ -40,6 +42,60 @@ pub fn register(table: *[256]InstructionMetadata) void {
         .cycles = 2,
         .handler = &bcs,
     };
+
+    // BEQ:
+    table[0xF0] = .{
+        .mnemonic = "BEQ",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &beq,
+    };
+
+    // BNE:
+    table[0xD0] = .{
+        .mnemonic = "BNE",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &bne,
+    };
+
+    // BMI:
+    table[0x30] = .{
+        .mnemonic = "BMI",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &bmi,
+    };
+
+    // BPL:
+    table[0x10] = .{
+        .mnemonic = "BPL",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &bpl,
+    };
+
+    // BVC:
+    table[0x50] = .{
+        .mnemonic = "BVC",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &bvc,
+    };
+
+    // BVS:
+    table[0x70] = .{
+        .mnemonic = "BVS",
+        .addressing_mode = .immediate,
+        .operand_type = .value,
+        .cycles = 2,
+        .handler = &bvs,
+    };
 }
 
 /// Sets the CPU's program counter to a new memory address
@@ -65,6 +121,87 @@ fn bcc(cpu: *CPU, op16: u16) void {
 fn bcs(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
     if (cpu.flags.carry) {
+        const offset: i8 = @bitCast(op);
+        if (offset < 0) {
+            cpu.pc -= @as(u8, @abs(offset));
+        } else {
+            cpu.pc += @as(u8, @abs(offset));
+        }
+    }
+}
+
+/// Branches to a new execution path if the CPU's zero flag is set (equal)
+fn beq(cpu: *CPU, op16: u16) void {
+    const op: u8 = @truncate(op16);
+    if (cpu.flags.zero) {
+        const offset: i8 = @bitCast(op);
+        if (offset < 0) { // The Zig compiler doesn't like adding an i8 to a u16.
+            // There's definitely a better way to do this.
+            cpu.pc -= @as(u8, @abs(offset));
+        } else {
+            cpu.pc += @as(u8, @abs(offset));
+        }
+    }
+}
+
+/// Branches to a new execution path if the CPU's zero flag not set (not equal)
+fn bne(cpu: *CPU, op16: u16) void {
+    const op: u8 = @truncate(op16);
+    if (!cpu.flags.zero) {
+        const offset: i8 = @bitCast(op);
+        if (offset < 0) {
+            cpu.pc -= @as(u8, @abs(offset));
+        } else {
+            cpu.pc += @as(u8, @abs(offset));
+        }
+    }
+}
+
+/// Branches to a new execution path if the CPU's negative flag is set (minus)
+fn bmi(cpu: *CPU, op16: u16) void {
+    const op: u8 = @truncate(op16);
+    if (cpu.flags.negative) {
+        const offset: i8 = @bitCast(op);
+        if (offset < 0) { // The Zig compiler doesn't like adding an i8 to a u16.
+            // There's definitely a better way to do this.
+            cpu.pc -= @as(u8, @abs(offset));
+        } else {
+            cpu.pc += @as(u8, @abs(offset));
+        }
+    }
+}
+
+/// Branches to a new execution path if the CPU's negative flag is not set (plus)
+fn bpl(cpu: *CPU, op16: u16) void {
+    const op: u8 = @truncate(op16);
+    if (!cpu.flags.negative) {
+        const offset: i8 = @bitCast(op);
+        if (offset < 0) {
+            cpu.pc -= @as(u8, @abs(offset));
+        } else {
+            cpu.pc += @as(u8, @abs(offset));
+        }
+    }
+}
+
+/// Branches to a new execution path if the CPU's overflow flag is not set
+fn bvc(cpu: *CPU, op16: u16) void {
+    const op: u8 = @truncate(op16);
+    if (!cpu.flags.overflow) {
+        const offset: i8 = @bitCast(op);
+        if (offset < 0) { // The Zig compiler doesn't like adding an i8 to a u16.
+            // There's definitely a better way to do this.
+            cpu.pc -= @as(u8, @abs(offset));
+        } else {
+            cpu.pc += @as(u8, @abs(offset));
+        }
+    }
+}
+
+/// Branches to a new execution path if the CPU's overflow flag is set
+fn bvs(cpu: *CPU, op16: u16) void {
+    const op: u8 = @truncate(op16);
+    if (cpu.flags.overflow) {
         const offset: i8 = @bitCast(op);
         if (offset < 0) {
             cpu.pc -= @as(u8, @abs(offset));
@@ -137,6 +274,150 @@ test "BCS" {
     try expectEqual(0x2002, cpu.pc);
 
     cpu.flags.carry = true;
+    _ = try cpu.step();
+    try expectEqual(0x2046, cpu.pc);
+}
+
+test "BEQ" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xF0, 0x42, // BEQ #42
+        0xF0, 0x42, // BEQ #42
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.flags.zero = false;
+    _ = try cpu.step();
+    try expectEqual(0x2002, cpu.pc);
+
+    cpu.flags.zero = true;
+    _ = try cpu.step();
+    try expectEqual(0x2046, cpu.pc);
+}
+
+test "BNE" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xD0, 0x42, // BNE #42
+        0xD0, 0x42, // BNE #42
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.flags.zero = true;
+    _ = try cpu.step();
+    try expectEqual(0x2002, cpu.pc);
+
+    cpu.flags.zero = false;
+    _ = try cpu.step();
+    try expectEqual(0x2046, cpu.pc);
+}
+
+test "BMI" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0x30, 0x42, // BMI #42
+        0x30, 0x42, // BMI #42
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.flags.negative = false;
+    _ = try cpu.step();
+    try expectEqual(0x2002, cpu.pc);
+
+    cpu.flags.negative = true;
+    _ = try cpu.step();
+    try expectEqual(0x2046, cpu.pc);
+}
+
+test "BPL" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0x10, 0x42, // BPL #42
+        0x10, 0x42, // BPL #42
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.flags.negative = true;
+    _ = try cpu.step();
+    try expectEqual(0x2002, cpu.pc);
+
+    cpu.flags.negative = false;
+    _ = try cpu.step();
+    try expectEqual(0x2046, cpu.pc);
+}
+
+test "BVC" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0x50, 0x42, // BVC #42
+        0x50, 0x42, // BVC #42
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.flags.overflow = true;
+    _ = try cpu.step();
+    try expectEqual(0x2002, cpu.pc);
+
+    cpu.flags.overflow = false;
+    _ = try cpu.step();
+    try expectEqual(0x2046, cpu.pc);
+}
+
+test "BVS" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0x70, 0x42, // BVS #42
+        0x70, 0x42, // BVS #42
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    cpu.flags.overflow = false;
+    _ = try cpu.step();
+    try expectEqual(0x2002, cpu.pc);
+
+    cpu.flags.overflow = true;
     _ = try cpu.step();
     try expectEqual(0x2046, cpu.pc);
 }

@@ -3,6 +3,7 @@ const InstructionMetadata = @import("./table.zig").InstructionMetadata;
 const std = @import("std");
 
 /// Loads all instructions handling register operations into the main instruction lookup table
+///
 /// Should be run at compile time
 pub fn register(table: *[256]InstructionMetadata) void {
     // LDA:

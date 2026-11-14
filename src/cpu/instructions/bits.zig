@@ -363,6 +363,23 @@ pub fn register(table: *[256]InstructionMetadata) void {
         .cycles = 7,
         .handler = &ror,
     };
+
+    // BIT
+    table[0x24] = .{
+        .mnemonic = "BIT",
+        .addressing_mode = .zero_page,
+        .operand_type = .value,
+        .cycles = 3,
+        .handler = &bit,
+    };
+
+    table[0x2C] = .{
+        .mnemonic = "BIT",
+        .addressing_mode = .absolute,
+        .operand_type = .value,
+        .cycles = 4,
+        .handler = &bit,
+    };
 }
 
 /// Bitwise ANDs the operand with the A register
@@ -475,6 +492,22 @@ fn ror_acc(cpu: *CPU, op: u16) void {
     }
 
     cpu.update_nz_flags(cpu.a);
+}
+
+/// Sets the CPU's V and N flags to bits 6 and 7 of the operand, respectively.
+///
+/// Sets the CPU's Z flag if the result of a bitwise AND between the operand
+/// and the A register == 0
+fn bit(cpu: *CPU, op16: u16) void {
+    const op: u8 = @truncate(op16);
+
+    const nFlag = op & 0b10000000;
+    const vFlag = op & 0b01000000;
+    const zFlag = op & cpu.a;
+
+    cpu.flags.negative = nFlag != 0;
+    cpu.flags.overflow = vFlag != 0;
+    cpu.flags.zero = zFlag == 0;
 }
 
 test "AND" {
@@ -737,4 +770,32 @@ test "ROR (mem)" {
     try expectEqual(0x2006, cpu.pc);
     try expectEqual(0xC0, cpu.readByte(0x80));
     try expect(cpu.flags.carry);
+}
+
+test "BIT" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+    const expect = std.testing.expect;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0xA9, 0xAA, // LDA #AA
+        0x85, 0x42, // STA $42
+        0xA9, 0x55, // LDA #55
+        0x24, 0x42, // BIT $42 ; N, ~V, Z
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step();
+    _ = try cpu.step();
+    _ = try cpu.step();
+    _ = try cpu.step();
+    try expectEqual(0x2008, cpu.pc);
+    try expect(cpu.flags.negative);
+    try expect(!cpu.flags.overflow);
+    try expect(cpu.flags.zero);
 }

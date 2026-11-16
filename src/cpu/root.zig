@@ -147,7 +147,7 @@ pub const CPU = struct {
         }
     }
 
-    pub fn pop(self: *CPU) u8 {
+    pub fn pull(self: *CPU) u8 {
         if (self.sp == 255) {
             self.sp = 0;
         } else {
@@ -165,9 +165,9 @@ pub const CPU = struct {
         self.push(lo);
     }
 
-    pub fn popWord(self: *CPU) u16 {
-        const lo: u16 = self.pop();
-        const hi: u16 = self.pop();
+    pub fn pullWord(self: *CPU) u16 {
+        const lo: u16 = self.pull();
+        const hi: u16 = self.pull();
 
         return hi << 8 | lo;
     }
@@ -488,7 +488,7 @@ test "Zero and negative flags" {
     try expect(cpu.flags.negative);
 }
 
-test "Push and pop bytes" {
+test "Push and pull bytes" {
     const gpa = std.testing.allocator;
     const expectEqual = std.testing.expectEqual;
 
@@ -499,12 +499,12 @@ test "Push and pop bytes" {
     cpu.push(2);
     cpu.push(3);
 
-    try expectEqual(3, cpu.pop());
-    try expectEqual(2, cpu.pop());
-    try expectEqual(1, cpu.pop());
+    try expectEqual(3, cpu.pull());
+    try expectEqual(2, cpu.pull());
+    try expectEqual(1, cpu.pull());
 }
 
-test "Push and pop words" {
+test "Push and pull words" {
     const gpa = std.testing.allocator;
     const expectEqual = std.testing.expectEqual;
 
@@ -515,10 +515,10 @@ test "Push and pop words" {
     cpu.pushWord(0x2000);
     cpu.pushWord(0x3000);
 
-    try expectEqual(0x3000, cpu.popWord());
-    try expectEqual(0x2000, cpu.popWord());
-    try expectEqual(0x00, cpu.pop());
-    try expectEqual(0x10, cpu.pop());
+    try expectEqual(0x3000, cpu.pullWord());
+    try expectEqual(0x2000, cpu.pullWord());
+    try expectEqual(0x00, cpu.pull());
+    try expectEqual(0x10, cpu.pull());
 }
 
 test "SP wraparound" {
@@ -537,7 +537,7 @@ test "SP wraparound" {
     try expectEqual(startingSp, cpu.sp);
 
     for (0..256) |i| {
-        try expectEqual(256 - i - 1, cpu.pop());
+        try expectEqual(256 - i - 1, cpu.pull());
     }
 }
 

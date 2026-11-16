@@ -156,6 +156,21 @@ pub const CPU = struct {
 
         return self.readByte(@as(u16, self.sp) + 0x100);
     }
+
+    pub fn pushWord(self: *CPU, word: u16) void {
+        const lo: u8 = @truncate(word & 0xff);
+        const hi: u8 = @truncate(word >> 8);
+
+        self.push(hi);
+        self.push(lo);
+    }
+
+    pub fn popWord(self: *CPU) u16 {
+        const lo: u16 = self.pop();
+        const hi: u16 = self.pop();
+
+        return hi << 8 | lo;
+    }
 };
 
 test "CPU init/deinit doesn't fail" {
@@ -473,7 +488,7 @@ test "Zero and negative flags" {
     try expect(cpu.flags.negative);
 }
 
-test "Push and pop" {
+test "Push and pop bytes" {
     const gpa = std.testing.allocator;
     const expectEqual = std.testing.expectEqual;
 
@@ -487,6 +502,23 @@ test "Push and pop" {
     try expectEqual(3, cpu.pop());
     try expectEqual(2, cpu.pop());
     try expectEqual(1, cpu.pop());
+}
+
+test "Push and pop words" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    cpu.pushWord(0x1000);
+    cpu.pushWord(0x2000);
+    cpu.pushWord(0x3000);
+
+    try expectEqual(0x3000, cpu.popWord());
+    try expectEqual(0x2000, cpu.popWord());
+    try expectEqual(0x00, cpu.pop());
+    try expectEqual(0x10, cpu.pop());
 }
 
 test "SP wraparound" {

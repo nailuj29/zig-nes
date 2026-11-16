@@ -136,6 +136,26 @@ pub const CPU = struct {
         self.flags.zero = value == 0;
         self.flags.negative = (value & (1 << 7)) != 0;
     }
+
+    pub fn push(self: *CPU, byte: u8) void {
+        self.writeByte(@as(u16, self.sp) + 0x100, byte);
+
+        if (self.sp == 0) {
+            self.sp = 255;
+        } else {
+            self.sp -= 1;
+        }
+    }
+
+    pub fn pop(self: *CPU) u8 {
+        if (self.sp == 255) {
+            self.sp = 0;
+        } else {
+            self.sp += 1;
+        }
+
+        return self.readByte(@as(u16, self.sp) + 0x100);
+    }
 };
 
 test "CPU init/deinit doesn't fail" {
@@ -451,6 +471,42 @@ test "Zero and negative flags" {
 
     cpu.update_nz_flags(255); // -1 in 2's complement
     try expect(cpu.flags.negative);
+}
+
+test "Push and pop" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    cpu.push(1);
+    cpu.push(2);
+    cpu.push(3);
+
+    try expectEqual(3, cpu.pop());
+    try expectEqual(2, cpu.pop());
+    try expectEqual(1, cpu.pop());
+}
+
+test "SP wraparound" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    const startingSp = cpu.sp;
+
+    for (0..256) |i| {
+        cpu.push(@truncate(i));
+    }
+
+    try expectEqual(startingSp, cpu.sp);
+
+    for (0..256) |i| {
+        try expectEqual(256 - i - 1, cpu.pop());
+    }
 }
 
 test {

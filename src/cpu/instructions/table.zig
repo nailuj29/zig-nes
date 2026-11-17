@@ -5,6 +5,7 @@ const regs = @import("./regs.zig");
 const math = @import("./math.zig");
 const bits = @import("./bits.zig");
 const branching = @import("./branching.zig");
+const stack = @import("./stack.zig");
 
 /// Possible addressing modes for an instruction
 pub const AddressMode = enum {
@@ -83,6 +84,7 @@ fn initTable() [256]InstructionMetadata {
     math.register(&table);
     bits.register(&table);
     branching.register(&table);
+    stack.register(&table);
 
     return table;
 }
@@ -114,4 +116,5 @@ test {
     _ = @import("./math.zig");
     _ = @import("./bits.zig");
     _ = @import("./branching.zig");
+    _ = @import("./stack.zig");
 }

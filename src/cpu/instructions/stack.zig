@@ -23,18 +23,55 @@ pub fn register(table: *[256]InstructionMetadata) void {
         .cycles = 3,
         .handler = &php,
     };
+
+    // PLA:
+    table[0x68] = .{
+        .mnemonic = "PLA",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 4,
+        .handler = &pla,
+    };
+
+    // PLP:
+    table[0x28] = .{
+        .mnemonic = "PLP",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 4,
+        .handler = &plp,
+    };
 }
 
+/// Pushes the CPU's A register to the stack
 fn pha(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.push(cpu.a);
 }
 
+/// Pushes the CPU's flags register to the stack, with the break flag set
 fn php(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.flags.brk = true;
 
     cpu.push(@bitCast(cpu.flags));
+}
+
+/// Pulls a value from the stack into the CPU's A register
+fn pla(cpu: *CPU, op: u16) void {
+    _ = op;
+    cpu.a = cpu.pull();
+}
+
+/// Pulls a value from the stack into the CPU's flags register
+fn plp(cpu: *CPU, op: u16) void {
+    _ = op;
+    cpu.flags.brk = true;
+
+    const value = cpu.pull();
+
+    cpu.flags = @bitCast(value);
+    cpu.flags.unused = true;
 }
 
 test "PHA" {
@@ -79,4 +116,52 @@ test "PHP" {
     _ = try cpu.step();
     try expectEqual(0x2003, cpu.pc);
     try expectEqual(0b00110101, cpu.pull());
+}
+
+test "PLA" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0x68, // PLA ; A value will have been manually pushed to the stack for testing purposes
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+    cpu.push(0x42);
+
+    _ = try cpu.step();
+    try expectEqual(0x2001, cpu.pc);
+    try expectEqual(0x42, cpu.a);
+}
+
+test "PLP" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+    const expect = std.testing.expect;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0x28, // PLP ; A value will have been manually pushed to the stack for testing purposes
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+    cpu.push(0b00010101);
+
+    _ = try cpu.step();
+    try expectEqual(0x2001, cpu.pc);
+    try expect(!cpu.flags.negative);
+    try expect(!cpu.flags.overflow);
+    try expect(cpu.flags.unused);
+    try expect(cpu.flags.brk);
+    try expect(!cpu.flags.decimal);
+    try expect(cpu.flags.interrupt_disable);
+    try expect(!cpu.flags.zero);
+    try expect(cpu.flags.carry);
 }

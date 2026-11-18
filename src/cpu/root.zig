@@ -56,7 +56,7 @@ pub const CPU = struct {
     pub fn step(self: *CPU) CPUError!u8 {
         const instr = self.advance();
         const meta = instruction_table[instr];
-        const operand = self.get_operand(meta.addressing_mode, meta.operand_type);
+        const operand = self.getOperand(meta.addressing_mode, meta.operand_type);
 
         meta.handler(self, operand);
 
@@ -100,7 +100,7 @@ pub const CPU = struct {
 
     /// Returns the operand of the previously read instruction given its mode.
     /// Will advance the program counter if necessary
-    fn get_operand(self: *CPU, mode: AddressMode, op_type: OperandType) u16 {
+    fn getOperand(self: *CPU, mode: AddressMode, op_type: OperandType) u16 {
         if (mode == .implied) return 255; // No opcode that can have an addressing mode of `implied` should be using this, return a garbage value
         if (mode == .immediate) return self.advance(); // Always a `value` type
         const addr = switch (mode) {
@@ -132,7 +132,7 @@ pub const CPU = struct {
     }
 
     /// Updates the negative and zero flags after an instruction is executed
-    pub fn update_nz_flags(self: *CPU, value: u8) void {
+    pub fn updateNZFlags(self: *CPU, value: u8) void {
         self.flags.zero = value == 0;
         self.flags.negative = (value & (1 << 7)) != 0;
     }
@@ -257,7 +257,7 @@ test "Immediate addressing mode" {
     cpu.pc = 0x2000;
 
     _ = cpu.advance(); // Go past instruction
-    try expectEqual(0x42, cpu.get_operand(.immediate, .value));
+    try expectEqual(0x42, cpu.getOperand(.immediate, .value));
 }
 
 test "Absolute addressing mode" {
@@ -277,7 +277,7 @@ test "Absolute addressing mode" {
     cpu.writeByte(0x4200, 0xaa); // Write the word to be read as the operand
 
     _ = cpu.advance(); // Go past instruction
-    try expectEqual(0xaa, cpu.get_operand(.absolute, .value));
+    try expectEqual(0xaa, cpu.getOperand(.absolute, .value));
 }
 
 test "Zero-page addressing mode" {
@@ -297,7 +297,7 @@ test "Zero-page addressing mode" {
     cpu.writeByte(0x42, 0xaa);
 
     _ = cpu.advance(); // Go past instruction
-    try expectEqual(0xaa, cpu.get_operand(.zero_page, .value));
+    try expectEqual(0xaa, cpu.getOperand(.zero_page, .value));
 }
 
 test "Absolute,X addressing mode" {
@@ -319,7 +319,7 @@ test "Absolute,X addressing mode" {
     cpu.writeByte(0x4242, 0xaa);
 
     _ = cpu.advance(); // Go past instruction
-    try expectEqual(0xaa, cpu.get_operand(.absolute_x, .value));
+    try expectEqual(0xaa, cpu.getOperand(.absolute_x, .value));
 }
 
 test "Absolute,Y addressing mode" {
@@ -341,7 +341,7 @@ test "Absolute,Y addressing mode" {
     cpu.writeByte(0x4242, 0xaa);
 
     _ = cpu.advance(); // Go past instruction
-    try expectEqual(0xaa, cpu.get_operand(.absolute_y, .value));
+    try expectEqual(0xaa, cpu.getOperand(.absolute_y, .value));
 }
 
 test "Zero-page,X addressing mode" {
@@ -363,7 +363,7 @@ test "Zero-page,X addressing mode" {
     cpu.writeByte(0x84, 0xaa);
 
     _ = cpu.advance(); // Go past instruction
-    try expectEqual(0xaa, cpu.get_operand(.zero_page_x, .value));
+    try expectEqual(0xaa, cpu.getOperand(.zero_page_x, .value));
 }
 
 test "Zero-page,Y addressing mode" {
@@ -385,7 +385,7 @@ test "Zero-page,Y addressing mode" {
     cpu.writeByte(0x84, 0xaa);
 
     _ = cpu.advance(); // Go past instruction
-    try expectEqual(0xaa, cpu.get_operand(.zero_page_x, .value));
+    try expectEqual(0xaa, cpu.getOperand(.zero_page_x, .value));
 }
 
 test "Indirect addressing mode" {
@@ -405,7 +405,7 @@ test "Indirect addressing mode" {
     cpu.writeWord(0x4200, 0xaaaa);
 
     _ = cpu.advance(); // Go past instruction
-    try expectEqual(0xaaaa, cpu.get_operand(.indirect, .address));
+    try expectEqual(0xaaaa, cpu.getOperand(.indirect, .address));
 }
 
 test "(Indirect, X) addressing mode" {
@@ -428,7 +428,7 @@ test "(Indirect, X) addressing mode" {
     cpu.writeByte(0x4200, 0xaa);
 
     _ = cpu.advance(); // Go past instruction
-    try expectEqual(0xaa, cpu.get_operand(.indirect_x, .value));
+    try expectEqual(0xaa, cpu.getOperand(.indirect_x, .value));
 }
 
 test "(Indirect),Y addressing mode" {
@@ -451,7 +451,7 @@ test "(Indirect),Y addressing mode" {
     cpu.writeByte(0x4242, 0xaa);
 
     _ = cpu.advance(); // Go past instruction
-    try expectEqual(0xaa, cpu.get_operand(.indirect_y, .value));
+    try expectEqual(0xaa, cpu.getOperand(.indirect_y, .value));
 }
 
 test "Addressing modes can return address" {
@@ -471,7 +471,7 @@ test "Addressing modes can return address" {
     cpu.writeByte(0x4200, 0xaa); // Write the word to be read as the operand
 
     _ = cpu.advance(); // Go past instruction
-    try expectEqual(0x4200, cpu.get_operand(.absolute, .address));
+    try expectEqual(0x4200, cpu.getOperand(.absolute, .address));
 }
 
 test "Zero and negative flags" {
@@ -481,10 +481,10 @@ test "Zero and negative flags" {
     var cpu = try CPU.init(gpa);
     defer cpu.deinit(gpa);
 
-    cpu.update_nz_flags(0);
+    cpu.updateNZFlags(0);
     try expect(cpu.flags.zero);
 
-    cpu.update_nz_flags(255); // -1 in 2's complement
+    cpu.updateNZFlags(255); // -1 in 2's complement
     try expect(cpu.flags.negative);
 }
 

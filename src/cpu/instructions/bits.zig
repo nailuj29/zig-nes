@@ -388,7 +388,7 @@ fn and_op(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
     cpu.a = cpu.a & op;
 
-    cpu.update_nz_flags(cpu.a);
+    cpu.updateNZFlags(cpu.a);
 }
 
 /// Bitwise ORs the operand with the A register
@@ -396,7 +396,7 @@ fn ora(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
     cpu.a = cpu.a | op;
 
-    cpu.update_nz_flags(cpu.a);
+    cpu.updateNZFlags(cpu.a);
 }
 
 /// Bitwise XORs the operand with the A register
@@ -404,7 +404,7 @@ fn eor(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
     cpu.a = cpu.a ^ op;
 
-    cpu.update_nz_flags(cpu.a);
+    cpu.updateNZFlags(cpu.a);
 }
 
 /// Shifts a value in memory left (filling in 0's from the right)
@@ -414,7 +414,7 @@ fn asl(cpu: *CPU, op: u16) void {
     value <<= 1;
     cpu.writeByte(op, value);
 
-    cpu.update_nz_flags(value);
+    cpu.updateNZFlags(value);
 }
 
 /// Shifts the value in the accumulator left (filling in 0's from the right)
@@ -423,7 +423,7 @@ fn asl_acc(cpu: *CPU, op: u16) void {
     cpu.flags.carry = (cpu.a & 0b10000000) != 0;
     cpu.a <<= 1;
 
-    cpu.update_nz_flags(cpu.a);
+    cpu.updateNZFlags(cpu.a);
 }
 
 /// Shifts a value in memory right (filling in 0's from the left)
@@ -433,7 +433,7 @@ fn lsr(cpu: *CPU, op: u16) void {
     value >>= 1;
     cpu.writeByte(op, value);
 
-    cpu.update_nz_flags(value);
+    cpu.updateNZFlags(value);
 }
 
 /// Shifts the value in the accumulator right (filling in 0's from the left)
@@ -442,7 +442,7 @@ fn lsr_acc(cpu: *CPU, op: u16) void {
     cpu.flags.carry = (cpu.a & 0b00000001) != 0;
     cpu.a >>= 1;
 
-    cpu.update_nz_flags(cpu.a);
+    cpu.updateNZFlags(cpu.a);
 }
 
 /// Rotates a value in memory left
@@ -455,7 +455,7 @@ fn rol(cpu: *CPU, op: u16) void {
     }
     cpu.writeByte(op, value);
 
-    cpu.update_nz_flags(value);
+    cpu.updateNZFlags(value);
 }
 
 /// Rotates the value in the accumulator left
@@ -467,7 +467,7 @@ fn rol_acc(cpu: *CPU, op: u16) void {
         cpu.a |= 0b00000001;
     }
 
-    cpu.update_nz_flags(cpu.a);
+    cpu.updateNZFlags(cpu.a);
 }
 
 /// Rotates a value in memory right
@@ -480,7 +480,7 @@ fn ror(cpu: *CPU, op: u16) void {
     }
     cpu.writeByte(op, value);
 
-    cpu.update_nz_flags(value);
+    cpu.updateNZFlags(value);
 }
 
 /// Rotates the value in the accumulator right
@@ -492,7 +492,7 @@ fn ror_acc(cpu: *CPU, op: u16) void {
         cpu.a |= 0b10000000;
     }
 
-    cpu.update_nz_flags(cpu.a);
+    cpu.updateNZFlags(cpu.a);
 }
 
 /// Sets the CPU's V and N flags to bits 6 and 7 of the operand, respectively.

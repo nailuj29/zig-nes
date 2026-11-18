@@ -374,7 +374,7 @@ fn adc(cpu: *CPU, op16: u16) void {
 
     cpu.flags.overflow = overflow;
 
-    cpu.update_nz_flags(cpu.a);
+    cpu.updateNZFlags(cpu.a);
 }
 
 /// Subtracts a value from memory to the computer with the carry flag
@@ -387,7 +387,7 @@ fn inc(cpu: *CPU, op: u16) void {
     const newValue = cpu.readByte(op) +% 1;
     cpu.writeByte(op, newValue);
 
-    cpu.update_nz_flags(newValue);
+    cpu.updateNZFlags(newValue);
 }
 
 /// Increments the CPU's X register by 1
@@ -395,7 +395,7 @@ fn inx(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.x = cpu.x +% 1;
 
-    cpu.update_nz_flags(cpu.x);
+    cpu.updateNZFlags(cpu.x);
 }
 
 /// Increments the CPU's Y register by 1
@@ -403,7 +403,7 @@ fn iny(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.y = cpu.y +% 1;
 
-    cpu.update_nz_flags(cpu.y);
+    cpu.updateNZFlags(cpu.y);
 }
 
 /// Decrements a value in memory by 1
@@ -411,7 +411,7 @@ fn dec(cpu: *CPU, op: u16) void {
     const newValue = cpu.readByte(op) -% 1;
     cpu.writeByte(op, newValue);
 
-    cpu.update_nz_flags(newValue);
+    cpu.updateNZFlags(newValue);
 }
 
 /// Decrements the CPU's X register by 1
@@ -419,7 +419,7 @@ fn dex(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.x = cpu.x -% 1;
 
-    cpu.update_nz_flags(cpu.x);
+    cpu.updateNZFlags(cpu.x);
 }
 
 /// Decrements the CPU's Y register by 1
@@ -427,7 +427,7 @@ fn dey(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.y = cpu.y -% 1;
 
-    cpu.update_nz_flags(cpu.y);
+    cpu.updateNZFlags(cpu.y);
 }
 
 /// Compares a value in the CPU's A register to a value in memory, updating the C, N, and Z flags
@@ -438,7 +438,7 @@ fn cmp(cpu: *CPU, op16: u16) void {
 
     cpu.flags.carry = resultCarry != 0;
 
-    cpu.update_nz_flags(@truncate(result16));
+    cpu.updateNZFlags(@truncate(result16));
 }
 
 /// Compares a value in the CPU's X register to a value in memory, updating the C, N, and Z flags
@@ -449,7 +449,7 @@ fn cpx(cpu: *CPU, op16: u16) void {
 
     cpu.flags.carry = resultCarry != 0;
 
-    cpu.update_nz_flags(@truncate(result16));
+    cpu.updateNZFlags(@truncate(result16));
 }
 
 /// Compares a value in the CPU's Y register to a value in memory, updating the C, N, and Z flags
@@ -460,7 +460,7 @@ fn cpy(cpu: *CPU, op16: u16) void {
 
     cpu.flags.carry = resultCarry != 0;
 
-    cpu.update_nz_flags(@truncate(result16));
+    cpu.updateNZFlags(@truncate(result16));
 }
 
 test "ADC" {

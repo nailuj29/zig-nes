@@ -391,21 +391,21 @@ pub fn register(table: *[256]InstructionMetadata) void {
 fn lda(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
     cpu.a = op;
-    cpu.update_nz_flags(op);
+    cpu.updateNZFlags(op);
 }
 
 /// Loads a value into the CPU's X register, updating the negative and zero flags if necessary
 fn ldx(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
     cpu.x = op;
-    cpu.update_nz_flags(op);
+    cpu.updateNZFlags(op);
 }
 
 /// Loads a value into the CPU's Y register, updating the negative and zero flags if necessary
 fn ldy(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
     cpu.y = op;
-    cpu.update_nz_flags(op);
+    cpu.updateNZFlags(op);
 }
 
 /// Stores a value from the CPU's A register in memory
@@ -427,42 +427,42 @@ fn sty(cpu: *CPU, op: u16) void {
 fn tax(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.x = cpu.a;
-    cpu.update_nz_flags(cpu.x);
+    cpu.updateNZFlags(cpu.x);
 }
 
 /// Transfers the CPU's A register to its Y register
 fn tay(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.y = cpu.a;
-    cpu.update_nz_flags(cpu.y);
+    cpu.updateNZFlags(cpu.y);
 }
 
 /// Transfers the CPU's stack pointer to its X register
 fn tsx(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.x = cpu.sp;
-    cpu.update_nz_flags(cpu.x);
+    cpu.updateNZFlags(cpu.x);
 }
 
 /// Transfers the CPU's X register to its A register
 fn txa(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.a = cpu.x;
-    cpu.update_nz_flags(cpu.a);
+    cpu.updateNZFlags(cpu.a);
 }
 
 /// Transfers the CPU's X register to its stack pointer
 fn txs(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.sp = cpu.x;
-    cpu.update_nz_flags(cpu.sp);
+    cpu.updateNZFlags(cpu.sp);
 }
 
 /// Transfers the CPU's Y register to its A register
 fn tya(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.a = cpu.y;
-    cpu.update_nz_flags(cpu.a);
+    cpu.updateNZFlags(cpu.a);
 }
 
 /// Clears the CPU's carry flag

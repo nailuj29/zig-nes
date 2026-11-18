@@ -46,6 +46,11 @@ pub fn build(b: *std.Build) void {
         .target = target,
     });
 
+    const memory_mod = b.addModule("memory", .{
+        .root_source_file = b.path("src/memory/root.zig"),
+        .target = target,
+    });
+
     // Here we define an executable. An executable needs to have a root module
     // which needs to expose a `main` function. While we could add a main function
     // to the module defined above, it's sometimes preferable to split business
@@ -85,6 +90,7 @@ pub fn build(b: *std.Build) void {
                 // importing modules from different packages).
                 .{ .name = "nes", .module = mod },
                 .{ .name = "cpu", .module = cpu_mod },
+                .{ .name = "memory", .module = memory_mod },
             },
         }),
     });
@@ -154,6 +160,13 @@ pub fn build(b: *std.Build) void {
 
     const run_cpu_tests = b.addRunArtifact(cpu_mod_tests);
 
+    const memory_mod_tests = b.addTest(.{
+        .root_module = memory_mod,
+        .filters = test_filters,
+    });
+
+    const run_memory_tests = b.addRunArtifact(memory_mod_tests);
+
     // A top level step for running all tests. dependOn can be called multiple
     // times and since the two run steps do not depend on one another, this will
     // make the two of them run in parallel.
@@ -161,6 +174,7 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_mod_tests.step);
     test_step.dependOn(&run_exe_tests.step);
     test_step.dependOn(&run_cpu_tests.step);
+    test_step.dependOn(&run_memory_tests.step);
 
     // Just like flags, top level steps are also listed in the `--help` menu.
     //

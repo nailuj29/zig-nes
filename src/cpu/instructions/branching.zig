@@ -114,6 +114,24 @@ pub fn register(table: *[256]InstructionMetadata) void {
         .cycles = 6,
         .handler = &rts,
     };
+
+    // BRK:
+    table[0x00] = .{
+        .mnemonic = "BRK",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 7,
+        .handler = &brk,
+    };
+
+    // RTI:
+    table[0x40] = .{
+        .mnemonic = "RTI",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 6,
+        .handler = &rti,
+    };
 }
 
 /// Sets the CPU's program counter to a new memory address
@@ -240,6 +258,31 @@ fn jsr(cpu: *CPU, op: u16) void {
 fn rts(cpu: *CPU, op: u16) void {
     _ = op;
     cpu.pc = cpu.pullWord() + 1;
+}
+
+/// Hands control to an interrupt handler at $FFFE
+///
+/// Pushes a return address (leaving a byte of space after the instruction)
+/// as well as the status register, with the break flag set.
+fn brk(cpu: *CPU, op: u16) void {
+    _ = op;
+    cpu.pushWord(cpu.pc + 1);
+
+    cpu.flags.brk = true;
+    cpu.push(@bitCast(cpu.flags));
+
+    cpu.pc = cpu.readWord(0xFFFE);
+}
+
+/// Returns control to the program from an interrupt handler
+///
+/// Pulls the status flags, then the return address from the stack
+fn rti(cpu: *CPU, op: u16) void {
+    _ = op;
+    cpu.flags = @bitCast(cpu.pull());
+    cpu.flags.unused = true;
+
+    cpu.pc = cpu.pullWord();
 }
 
 test "JMP" {
@@ -489,4 +532,50 @@ test "RTS" {
 
     _ = try cpu.step();
     try expectEqual(0x4201, cpu.pc);
+}
+
+test "BRK" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0x00, // BRK
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+    cpu.flags.carry = true;
+
+    cpu.writeWord(0xFFFE, 0x4200);
+
+    _ = try cpu.step();
+    try expectEqual(0b00110001, cpu.pull());
+    try expectEqual(0x2002, cpu.pullWord());
+    try expectEqual(0x4200, cpu.pc);
+}
+
+test "RTI" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+    const expect = std.testing.expect;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0x40, // RTI ; Stack initialized already, for testing reasons
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+    cpu.pushWord(0x4200);
+    cpu.push(0b10110001);
+
+    _ = try cpu.step();
+    try expect(cpu.flags.carry);
+    try expect(cpu.flags.negative);
+    try expectEqual(0x4200, cpu.pc);
 }

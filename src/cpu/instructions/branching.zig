@@ -143,13 +143,12 @@ fn jmp(cpu: *CPU, op: u16) void {
 fn bcc(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
     if (!cpu.flags.carry) {
-        const offset: i8 = @bitCast(op);
-        if (offset < 0) { // The Zig compiler doesn't like adding an i8 to a u16.
-            // There's definitely a better way to do this.
-            cpu.pc -= @as(u8, @abs(offset));
-        } else {
-            cpu.pc += @as(u8, @abs(offset));
+        const old_pc = cpu.pc;
+        cpu.pc += op;
+        if (op > 127) {
+            cpu.pc -= 256;
         }
+        cpu.extra_cycles += if (cpu.pc & 0xff00 != old_pc & 0xff00) 2 else 1;
     }
 }
 
@@ -157,12 +156,12 @@ fn bcc(cpu: *CPU, op16: u16) void {
 fn bcs(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
     if (cpu.flags.carry) {
-        const offset: i8 = @bitCast(op);
-        if (offset < 0) {
-            cpu.pc -= @as(u8, @abs(offset));
-        } else {
-            cpu.pc += @as(u8, @abs(offset));
+        const old_pc = cpu.pc;
+        cpu.pc += op;
+        if (op > 127) {
+            cpu.pc -= 256;
         }
+        cpu.extra_cycles += if (cpu.pc & 0xff00 != old_pc & 0xff00) 2 else 1;
     }
 }
 
@@ -170,13 +169,12 @@ fn bcs(cpu: *CPU, op16: u16) void {
 fn beq(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
     if (cpu.flags.zero) {
-        const offset: i8 = @bitCast(op);
-        if (offset < 0) { // The Zig compiler doesn't like adding an i8 to a u16.
-            // There's definitely a better way to do this.
-            cpu.pc -= @as(u8, @abs(offset));
-        } else {
-            cpu.pc += @as(u8, @abs(offset));
+        const old_pc = cpu.pc;
+        cpu.pc += op;
+        if (op > 127) {
+            cpu.pc -= 256;
         }
+        cpu.extra_cycles += if (cpu.pc & 0xff00 != old_pc & 0xff00) 2 else 1;
     }
 }
 
@@ -184,12 +182,12 @@ fn beq(cpu: *CPU, op16: u16) void {
 fn bne(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
     if (!cpu.flags.zero) {
-        const offset: i8 = @bitCast(op);
-        if (offset < 0) {
-            cpu.pc -= @as(u8, @abs(offset));
-        } else {
-            cpu.pc += @as(u8, @abs(offset));
+        const old_pc = cpu.pc;
+        cpu.pc += op;
+        if (op > 127) {
+            cpu.pc -= 256;
         }
+        cpu.extra_cycles += if (cpu.pc & 0xff00 != old_pc & 0xff00) 2 else 1;
     }
 }
 
@@ -197,13 +195,12 @@ fn bne(cpu: *CPU, op16: u16) void {
 fn bmi(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
     if (cpu.flags.negative) {
-        const offset: i8 = @bitCast(op);
-        if (offset < 0) { // The Zig compiler doesn't like adding an i8 to a u16.
-            // There's definitely a better way to do this.
-            cpu.pc -= @as(u8, @abs(offset));
-        } else {
-            cpu.pc += @as(u8, @abs(offset));
+        const old_pc = cpu.pc;
+        cpu.pc += op;
+        if (op > 127) {
+            cpu.pc -= 256;
         }
+        cpu.extra_cycles += if (cpu.pc & 0xff00 != old_pc & 0xff00) 2 else 1;
     }
 }
 
@@ -211,12 +208,12 @@ fn bmi(cpu: *CPU, op16: u16) void {
 fn bpl(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
     if (!cpu.flags.negative) {
-        const offset: i8 = @bitCast(op);
-        if (offset < 0) {
-            cpu.pc -= @as(u8, @abs(offset));
-        } else {
-            cpu.pc += @as(u8, @abs(offset));
+        const old_pc = cpu.pc;
+        cpu.pc += op;
+        if (op > 127) {
+            cpu.pc -= 256;
         }
+        cpu.extra_cycles += if (cpu.pc & 0xff00 != old_pc & 0xff00) 2 else 1;
     }
 }
 
@@ -224,13 +221,12 @@ fn bpl(cpu: *CPU, op16: u16) void {
 fn bvc(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
     if (!cpu.flags.overflow) {
-        const offset: i8 = @bitCast(op);
-        if (offset < 0) { // The Zig compiler doesn't like adding an i8 to a u16.
-            // There's definitely a better way to do this.
-            cpu.pc -= @as(u8, @abs(offset));
-        } else {
-            cpu.pc += @as(u8, @abs(offset));
+        const old_pc = cpu.pc;
+        cpu.pc += op;
+        if (op > 127) {
+            cpu.pc -= 256;
         }
+        cpu.extra_cycles += if (cpu.pc & 0xff00 != old_pc & 0xff00) 2 else 1;
     }
 }
 
@@ -238,12 +234,12 @@ fn bvc(cpu: *CPU, op16: u16) void {
 fn bvs(cpu: *CPU, op16: u16) void {
     const op: u8 = @truncate(op16);
     if (cpu.flags.overflow) {
-        const offset: i8 = @bitCast(op);
-        if (offset < 0) {
-            cpu.pc -= @as(u8, @abs(offset));
-        } else {
-            cpu.pc += @as(u8, @abs(offset));
+        const old_pc = cpu.pc;
+        cpu.pc += op;
+        if (op > 127) {
+            cpu.pc -= 256;
         }
+        cpu.extra_cycles += if (cpu.pc & 0xff00 != old_pc & 0xff00) 2 else 1;
     }
 }
 

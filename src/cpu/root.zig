@@ -29,6 +29,7 @@ pub const CPU = struct {
     pc: u16 = 0,
     sp: u8 = 0xfd,
     flags: CPUFlags = .{},
+    extra_cycles: u8 = 0,
 
     /// Initialize the CPU. Requires an allocator so the CPU struct can reserve 64KB of RAM
     pub fn init(allocator: Allocator) !CPU {
@@ -54,13 +55,14 @@ pub const CPU = struct {
 
     /// Runs the instruction the program counter points to, advancing as necessary
     pub fn step(self: *CPU) CPUError!u8 {
+        self.extra_cycles = 0;
         const instr = self.advance();
         const meta = instruction_table[instr];
         const operand = self.getOperand(meta.addressing_mode, meta.operand_type);
 
         meta.handler(self, operand);
 
-        return meta.cycles;
+        return meta.cycles + self.extra_cycles;
     }
 
     /// Reads a single byte from the CPU's RAM
@@ -106,11 +108,33 @@ pub const CPU = struct {
         const addr = switch (mode) {
             .absolute => self.advanceWord(),
             .zero_page => self.advance(),
-            .absolute_x => self.advanceWord() + self.x,
-            .absolute_y => self.advanceWord() + self.y,
+            .absolute_x => blk: {
+                const base = self.advanceWord();
+                const addr = base + self.x;
+                if (addr & 0xff00 != base & 0xff00) {
+                    self.extra_cycles += 1;
+                }
+                break :blk addr;
+            },
+            .absolute_y => blk: {
+                const base = self.advanceWord();
+                const addr = base + self.y;
+                if (addr & 0xff00 != base & 0xff00) {
+                    self.extra_cycles += 1;
+                }
+                break :blk addr;
+            },
             .zero_page_x => (self.advance() + self.x) & 0xff,
             .zero_page_y => (self.advance() + self.y) & 0xff,
-            .indirect => self.readWord(self.advanceWord()),
+            .indirect => blk: {
+                const addr_indirect_lo: u16 = self.advance();
+                const addr_indirect_hi: u16 = self.advance();
+
+                const addr_lo: u16 = self.readWord(addr_indirect_hi << 8 | addr_indirect_lo);
+                const addr_hi: u16 = self.readWord(addr_indirect_hi << 8 | (addr_indirect_lo + 1) & 0xff);
+
+                break :blk addr_hi << 8 | addr_lo;
+            },
             .indirect_x => blk: {
                 const addr_indirect = (self.advance() + self.x) & 0xff;
                 const addr_actual = self.readWord(addr_indirect);

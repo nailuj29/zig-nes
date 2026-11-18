@@ -96,6 +96,24 @@ pub fn register(table: *[256]InstructionMetadata) void {
         .cycles = 2,
         .handler = &bvs,
     };
+
+    // JSR:
+    table[0x20] = .{
+        .mnemonic = "JSR",
+        .addressing_mode = .absolute,
+        .operand_type = .address,
+        .cycles = 6,
+        .handler = &jsr,
+    };
+
+    // RTS:
+    table[0x60] = .{
+        .mnemonic = "RTS",
+        .addressing_mode = .implied,
+        .operand_type = .none,
+        .cycles = 6,
+        .handler = &rts,
+    };
 }
 
 /// Sets the CPU's program counter to a new memory address
@@ -209,6 +227,19 @@ fn bvs(cpu: *CPU, op16: u16) void {
             cpu.pc += @as(u8, @abs(offset));
         }
     }
+}
+
+/// Jumps to a subroutine at the specified address, and pushes the return address to the stack
+fn jsr(cpu: *CPU, op: u16) void {
+    cpu.pushWord(cpu.pc - 1);
+
+    cpu.pc = op;
+}
+
+/// Returns from a subroutine, pulling the return address from the stack
+fn rts(cpu: *CPU, op: u16) void {
+    _ = op;
+    cpu.pc = cpu.pullWord() + 1;
 }
 
 test "JMP" {
@@ -420,4 +451,42 @@ test "BVS" {
     cpu.flags.overflow = true;
     _ = try cpu.step();
     try expectEqual(0x2046, cpu.pc);
+}
+
+test "JSR" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0x20, 0x00, 0x42, // JSR $4200
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+
+    _ = try cpu.step();
+    try expectEqual(0x2002, cpu.pullWord());
+    try expectEqual(0x4200, cpu.pc);
+}
+
+test "RTS" {
+    const gpa = std.testing.allocator;
+    const expectEqual = std.testing.expectEqual;
+
+    var cpu = try CPU.init(gpa);
+    defer cpu.deinit(gpa);
+
+    var code = [_]u8{
+        0x60, // RTS ; A value will have been manually pushed to the stack for testing purposes
+    };
+
+    try cpu.loadCode(0x2000, &code);
+    cpu.pc = 0x2000;
+    cpu.pushWord(0x4200);
+
+    _ = try cpu.step();
+    try expectEqual(0x4201, cpu.pc);
 }

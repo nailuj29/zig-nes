@@ -86,12 +86,12 @@ test "PHA" {
         0x48, // PHA
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
     _ = try cpu.step();
-    try expectEqual(0x2003, cpu.pc);
+    try expectEqual(0x6003, cpu.pc);
     try expectEqual(0x42, cpu.pull());
 }
 
@@ -108,13 +108,13 @@ test "PHP" {
         0x08, // PHP
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
     _ = try cpu.step();
     _ = try cpu.step();
-    try expectEqual(0x2003, cpu.pc);
+    try expectEqual(0x6003, cpu.pc);
     try expectEqual(0b00110101, cpu.pull());
 }
 
@@ -129,12 +129,12 @@ test "PLA" {
         0x68, // PLA ; A value will have been manually pushed to the stack for testing purposes
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
     cpu.push(0x42);
 
     _ = try cpu.step();
-    try expectEqual(0x2001, cpu.pc);
+    try expectEqual(0x6001, cpu.pc);
     try expectEqual(0x42, cpu.a);
 }
 
@@ -150,12 +150,12 @@ test "PLP" {
         0x28, // PLP ; A value will have been manually pushed to the stack for testing purposes
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
     cpu.push(0b00010101);
 
     _ = try cpu.step();
-    try expectEqual(0x2001, cpu.pc);
+    try expectEqual(0x6001, cpu.pc);
     try expect(!cpu.flags.negative);
     try expect(!cpu.flags.overflow);
     try expect(cpu.flags.unused);

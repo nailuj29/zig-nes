@@ -523,13 +523,13 @@ test "AND" {
         0x29, 0xAA, // AND #AA ; A = 0xaa
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
 
     _ = try cpu.step();
-    try expectEqual(0x2004, cpu.pc);
+    try expectEqual(0x6004, cpu.pc);
     try expectEqual(0xaa, cpu.a);
 }
 
@@ -545,13 +545,13 @@ test "ORA" {
         0x09, 0xAA, // ORA #AA ; A = 0xaa
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
 
     _ = try cpu.step();
-    try expectEqual(0x2004, cpu.pc);
+    try expectEqual(0x6004, cpu.pc);
     try expectEqual(0xaa, cpu.a);
 }
 
@@ -567,13 +567,13 @@ test "EOR" {
         0x49, 0xAA, // EOR #AA ; A = 0x55
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
 
     _ = try cpu.step();
-    try expectEqual(0x2004, cpu.pc);
+    try expectEqual(0x6004, cpu.pc);
     try expectEqual(0x55, cpu.a);
 }
 
@@ -590,13 +590,13 @@ test "ASL (acc)" {
         0x0A, // ASL A ; A = 0xFE, C
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
 
     _ = try cpu.step();
-    try expectEqual(0x2003, cpu.pc);
+    try expectEqual(0x6003, cpu.pc);
     try expectEqual(0xFE, cpu.a);
     try expect(cpu.flags.carry);
 }
@@ -615,13 +615,13 @@ test "ASL (mem)" {
         0x06, 0x80, // ASL $80 ; *$80 = 0xFE, C
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
     _ = try cpu.step();
     _ = try cpu.step();
-    try expectEqual(0x2006, cpu.pc);
+    try expectEqual(0x6006, cpu.pc);
     try expectEqual(0xFE, cpu.readByte(0x80));
     try expect(cpu.flags.carry);
 }
@@ -639,13 +639,13 @@ test "LSR (acc)" {
         0x4A, // LSR A ; A = 0x7F, C
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
 
     _ = try cpu.step();
-    try expectEqual(0x2003, cpu.pc);
+    try expectEqual(0x6003, cpu.pc);
     try expectEqual(0x7F, cpu.a);
     try expect(cpu.flags.carry);
 }
@@ -664,13 +664,13 @@ test "LSR (mem)" {
         0x46, 0x80, // LSR $80 ; *$80 = 0x7F, C
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
     _ = try cpu.step();
     _ = try cpu.step();
-    try expectEqual(0x2006, cpu.pc);
+    try expectEqual(0x6006, cpu.pc);
     try expectEqual(0x7F, cpu.readByte(0x80));
     try expect(cpu.flags.carry);
 }
@@ -688,13 +688,13 @@ test "ROL (acc)" {
         0x2A, // ROL A ; A = 0x03, C
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
 
     _ = try cpu.step();
-    try expectEqual(0x2003, cpu.pc);
+    try expectEqual(0x6003, cpu.pc);
     try expectEqual(0x03, cpu.a);
     try expect(cpu.flags.carry);
 }
@@ -713,13 +713,13 @@ test "ROL (mem)" {
         0x26, 0x80, // ROL $80 ; *$80 = 0x03, C
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
     _ = try cpu.step();
     _ = try cpu.step();
-    try expectEqual(0x2006, cpu.pc);
+    try expectEqual(0x6006, cpu.pc);
     try expectEqual(0x03, cpu.readByte(0x80));
     try expect(cpu.flags.carry);
 }
@@ -737,13 +737,13 @@ test "ROR (acc)" {
         0x6A, // ROR A ; A = 0xC0, C
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
 
     _ = try cpu.step();
-    try expectEqual(0x2003, cpu.pc);
+    try expectEqual(0x6003, cpu.pc);
     try expectEqual(0xC0, cpu.a);
     try expect(cpu.flags.carry);
 }
@@ -762,13 +762,13 @@ test "ROR (mem)" {
         0x66, 0x80, // ROR $80 ; *$80 = 0xC0, C
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
     _ = try cpu.step();
     _ = try cpu.step();
-    try expectEqual(0x2006, cpu.pc);
+    try expectEqual(0x6006, cpu.pc);
     try expectEqual(0xC0, cpu.readByte(0x80));
     try expect(cpu.flags.carry);
 }
@@ -788,14 +788,14 @@ test "BIT" {
         0x24, 0x42, // BIT $42 ; N, ~V, Z
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
     _ = try cpu.step();
     _ = try cpu.step();
     _ = try cpu.step();
-    try expectEqual(0x2008, cpu.pc);
+    try expectEqual(0x6008, cpu.pc);
     try expect(cpu.flags.negative);
     try expect(!cpu.flags.overflow);
     try expect(cpu.flags.zero);

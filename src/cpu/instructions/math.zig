@@ -479,32 +479,32 @@ test "ADC" {
         0x69, 0x00, // ADC #00 ; A = 0x03 since C is set
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
 
     const cycle_count = try cpu.step();
     try expectEqual(2, cycle_count);
-    try expectEqual(0x2004, cpu.pc);
+    try expectEqual(0x6004, cpu.pc);
     try expectEqual(0x52, cpu.a);
     try expect(!cpu.flags.overflow);
     try expect(!cpu.flags.carry);
 
     _ = try cpu.step();
-    try expectEqual(0x2006, cpu.pc);
+    try expectEqual(0x6006, cpu.pc);
     try expectEqual(0x82, cpu.a);
     try expect(cpu.flags.overflow);
     try expect(!cpu.flags.carry);
 
     _ = try cpu.step();
-    try expectEqual(0x2008, cpu.pc);
+    try expectEqual(0x6008, cpu.pc);
     try expectEqual(0x02, cpu.a);
     try expect(cpu.flags.overflow);
     try expect(cpu.flags.carry);
 
     _ = try cpu.step();
-    try expectEqual(0x200a, cpu.pc);
+    try expectEqual(0x600a, cpu.pc);
     try expectEqual(0x03, cpu.a);
     try expect(!cpu.flags.overflow);
     try expect(!cpu.flags.carry);
@@ -524,15 +524,15 @@ test "SBC" {
         0xE9, 0x40, // SBC #40 ; A = 0x02, C
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
 
     cpu.flags.carry = true;
 
     _ = try cpu.step();
-    try expectEqual(0x2004, cpu.pc);
+    try expectEqual(0x6004, cpu.pc);
     try expectEqual(0x02, cpu.a);
     try expect(!cpu.flags.overflow);
     try expect(cpu.flags.carry);
@@ -549,13 +549,13 @@ test "INC" {
         0xE6, 0x42, // INC $42
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.writeByte(0x0042, 0xaa);
 
     _ = try cpu.step();
-    try expectEqual(0x2002, cpu.pc);
+    try expectEqual(0x6002, cpu.pc);
     try expectEqual(0xab, cpu.readByte(0x42));
 }
 
@@ -570,13 +570,13 @@ test "INX" {
         0xE8, // INX
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.x = 0xaa;
 
     _ = try cpu.step();
-    try expectEqual(0x2001, cpu.pc);
+    try expectEqual(0x6001, cpu.pc);
     try expectEqual(0xab, cpu.x);
 }
 
@@ -591,13 +591,13 @@ test "INY" {
         0xC8, // INY
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.y = 0xaa;
 
     _ = try cpu.step();
-    try expectEqual(0x2001, cpu.pc);
+    try expectEqual(0x6001, cpu.pc);
     try expectEqual(0xab, cpu.y);
 }
 
@@ -612,13 +612,13 @@ test "DEC" {
         0xC6, 0x42, // DEC $42
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.writeByte(0x0042, 0xaa);
 
     _ = try cpu.step();
-    try expectEqual(0x2002, cpu.pc);
+    try expectEqual(0x6002, cpu.pc);
     try expectEqual(0xa9, cpu.readByte(0x42));
 }
 
@@ -633,13 +633,13 @@ test "DEX" {
         0xCA, // DEX
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.x = 0xaa;
 
     _ = try cpu.step();
-    try expectEqual(0x2001, cpu.pc);
+    try expectEqual(0x6001, cpu.pc);
     try expectEqual(0xa9, cpu.x);
 }
 
@@ -654,13 +654,13 @@ test "DEY" {
         0x88, // DEY
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.y = 0xaa;
 
     _ = try cpu.step();
-    try expectEqual(0x2001, cpu.pc);
+    try expectEqual(0x6001, cpu.pc);
     try expectEqual(0xa9, cpu.y);
 }
 
@@ -679,25 +679,25 @@ test "CMP" {
         0xC9, 0x42, // CMP #40 ; C, Z
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
 
     _ = try cpu.step();
-    try expectEqual(0x2004, cpu.pc);
+    try expectEqual(0x6004, cpu.pc);
     try expect(!cpu.flags.zero);
     try expect(cpu.flags.carry);
     try expect(!cpu.flags.negative);
 
     _ = try cpu.step();
-    try expectEqual(0x2006, cpu.pc);
+    try expectEqual(0x6006, cpu.pc);
     try expect(!cpu.flags.zero);
     try expect(!cpu.flags.carry);
     try expect(cpu.flags.negative);
 
     _ = try cpu.step();
-    try expectEqual(0x2008, cpu.pc);
+    try expectEqual(0x6008, cpu.pc);
     try expect(cpu.flags.zero);
     try expect(cpu.flags.carry);
     try expect(!cpu.flags.negative);
@@ -716,13 +716,13 @@ test "CPX" {
         0xE0, 0x40, // CPX #40 ; C
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
 
     _ = try cpu.step();
-    try expectEqual(0x2004, cpu.pc);
+    try expectEqual(0x6004, cpu.pc);
     try expect(!cpu.flags.zero);
     try expect(cpu.flags.carry);
     try expect(!cpu.flags.negative);
@@ -741,13 +741,13 @@ test "CPY" {
         0xC0, 0x40, // CPY #40 ; C
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
 
     _ = try cpu.step();
-    try expectEqual(0x2004, cpu.pc);
+    try expectEqual(0x6004, cpu.pc);
     try expect(!cpu.flags.zero);
     try expect(cpu.flags.carry);
     try expect(!cpu.flags.negative);

@@ -41,13 +41,16 @@ pub fn build(b: *std.Build) void {
         .target = target,
     });
 
-    const cpu_mod = b.addModule("cpu", .{
-        .root_source_file = b.path("src/cpu/root.zig"),
+    const memory_mod = b.addModule("memory", .{
+        .root_source_file = b.path("src/memory/root.zig"),
         .target = target,
     });
 
-    const memory_mod = b.addModule("memory", .{
-        .root_source_file = b.path("src/memory/root.zig"),
+    const cpu_mod = b.addModule("cpu", .{
+        .root_source_file = b.path("src/cpu/root.zig"),
+        .imports = &.{
+            .{ .name = "memory", .module = memory_mod },
+        },
         .target = target,
     });
 

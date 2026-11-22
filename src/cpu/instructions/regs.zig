@@ -521,8 +521,8 @@ test "LDA" {
         0xB5, 0x42, // LDA $42,X
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.writeByte(0x42, 0x80); // -128 in 2's complement
     cpu.writeByte(0x84, 0x00);
@@ -531,18 +531,18 @@ test "LDA" {
 
     const cycle_count = try cpu.step();
     try expectEqual(2, cycle_count);
-    try expectEqual(0x2002, cpu.pc);
+    try expectEqual(0x6002, cpu.pc);
     try expectEqual(0x42, cpu.a);
 
     const cycle_count2 = try cpu.step();
     try expectEqual(3, cycle_count2);
-    try expectEqual(0x2004, cpu.pc);
+    try expectEqual(0x6004, cpu.pc);
     try expectEqual(0x80, cpu.a);
     try expect(cpu.flags.negative);
 
     const cycle_count3 = try cpu.step();
     try expectEqual(4, cycle_count3);
-    try expectEqual(0x2006, cpu.pc);
+    try expectEqual(0x6006, cpu.pc);
     try expectEqual(0x00, cpu.a);
     try expect(cpu.flags.zero);
 }
@@ -558,12 +558,12 @@ test "LDX" {
         0xA2, 0x42, // LDX #42
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     const cycle_count = try cpu.step();
     try expectEqual(2, cycle_count);
-    try expectEqual(0x2002, cpu.pc);
+    try expectEqual(0x6002, cpu.pc);
     try expectEqual(0x42, cpu.x);
 }
 
@@ -578,12 +578,12 @@ test "LDY" {
         0xA0, 0x42, // LDY #42
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     const cycle_count = try cpu.step();
     try expectEqual(2, cycle_count);
-    try expectEqual(0x2002, cpu.pc);
+    try expectEqual(0x6002, cpu.pc);
     try expectEqual(0x42, cpu.y);
 }
 
@@ -599,13 +599,13 @@ test "STA" {
         0x8D, 0x00, 0x80, // STA $8000
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step(); // skip the LDA
     const cycle_count = try cpu.step();
     try expectEqual(4, cycle_count);
-    try expectEqual(0x2005, cpu.pc);
+    try expectEqual(0x6005, cpu.pc);
     try expectEqual(0x42, cpu.readByte(0x8000));
 }
 
@@ -621,13 +621,13 @@ test "STX" {
         0x8E, 0x00, 0x80, // STX $8000
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step(); // skip the LDA
     const cycle_count = try cpu.step();
     try expectEqual(4, cycle_count);
-    try expectEqual(0x2005, cpu.pc);
+    try expectEqual(0x6005, cpu.pc);
     try expectEqual(0x42, cpu.readByte(0x8000));
 }
 
@@ -643,13 +643,13 @@ test "STY" {
         0x8C, 0x00, 0x80, // STY $8000
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step(); // skip the LDA
     const cycle_count = try cpu.step();
     try expectEqual(4, cycle_count);
-    try expectEqual(0x2005, cpu.pc);
+    try expectEqual(0x6005, cpu.pc);
     try expectEqual(0x42, cpu.readByte(0x8000));
 }
 
@@ -665,13 +665,13 @@ test "TAX" {
         0xAA, // TAX
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step(); // Skip LDA
     const cycle_count = try cpu.step();
     try expectEqual(2, cycle_count);
-    try expectEqual(0x2003, cpu.pc);
+    try expectEqual(0x6003, cpu.pc);
     try expectEqual(0x42, cpu.x);
 }
 
@@ -687,13 +687,13 @@ test "TAY" {
         0xA8, // TAY
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step(); // Skip LDA
     const cycle_count = try cpu.step();
     try expectEqual(2, cycle_count);
-    try expectEqual(0x2003, cpu.pc);
+    try expectEqual(0x6003, cpu.pc);
     try expectEqual(0x42, cpu.y);
 }
 
@@ -708,12 +708,12 @@ test "TSX" {
         0xBA, // TSX
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     const cycle_count = try cpu.step();
     try expectEqual(2, cycle_count);
-    try expectEqual(0x2001, cpu.pc);
+    try expectEqual(0x6001, cpu.pc);
     try expectEqual(0xfd, cpu.x);
 }
 
@@ -729,13 +729,13 @@ test "TXA" {
         0x8A, // TXA
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step(); // Skip LDX
     const cycle_count = try cpu.step();
     try expectEqual(2, cycle_count);
-    try expectEqual(0x2003, cpu.pc);
+    try expectEqual(0x6003, cpu.pc);
     try expectEqual(0x42, cpu.a);
 }
 
@@ -751,13 +751,13 @@ test "TXS" {
         0x9A, // TAY
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step(); // Skip LDX
     const cycle_count = try cpu.step();
     try expectEqual(2, cycle_count);
-    try expectEqual(0x2003, cpu.pc);
+    try expectEqual(0x6003, cpu.pc);
     try expectEqual(0x42, cpu.sp);
 }
 
@@ -773,13 +773,13 @@ test "TYA" {
         0x98, // TYA
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step(); // Skip LDY
     const cycle_count = try cpu.step();
     try expectEqual(2, cycle_count);
-    try expectEqual(0x2003, cpu.pc);
+    try expectEqual(0x6003, cpu.pc);
     try expectEqual(0x42, cpu.a);
 }
 
@@ -797,11 +797,11 @@ test "CLC" {
 
     cpu.flags.carry = true;
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
-    try expectEqual(0x2001, cpu.pc);
+    try expectEqual(0x6001, cpu.pc);
     try expect(!cpu.flags.carry);
 }
 
@@ -819,11 +819,11 @@ test "CLD" {
 
     cpu.flags.decimal = true;
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
-    try expectEqual(0x2001, cpu.pc);
+    try expectEqual(0x6001, cpu.pc);
     try expect(!cpu.flags.decimal);
 }
 
@@ -841,11 +841,11 @@ test "CLI" {
 
     cpu.flags.interrupt_disable = true;
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
-    try expectEqual(0x2001, cpu.pc);
+    try expectEqual(0x6001, cpu.pc);
     try expect(!cpu.flags.interrupt_disable);
 }
 
@@ -863,11 +863,11 @@ test "CLV" {
 
     cpu.flags.overflow = true;
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
-    try expectEqual(0x2001, cpu.pc);
+    try expectEqual(0x6001, cpu.pc);
     try expect(!cpu.flags.overflow);
 }
 
@@ -885,11 +885,11 @@ test "SEC" {
 
     cpu.flags.carry = false;
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
-    try expectEqual(0x2001, cpu.pc);
+    try expectEqual(0x6001, cpu.pc);
     try expect(cpu.flags.carry);
 }
 
@@ -907,11 +907,11 @@ test "SED" {
 
     cpu.flags.decimal = false;
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
-    try expectEqual(0x2001, cpu.pc);
+    try expectEqual(0x6001, cpu.pc);
     try expect(cpu.flags.decimal);
 }
 
@@ -929,10 +929,10 @@ test "SEI" {
 
     cpu.flags.interrupt_disable = false;
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
-    try expectEqual(0x2001, cpu.pc);
+    try expectEqual(0x6001, cpu.pc);
     try expect(cpu.flags.interrupt_disable);
 }

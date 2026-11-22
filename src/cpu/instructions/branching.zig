@@ -292,8 +292,8 @@ test "JMP" {
         0x4C, 0x00, 0x42, // JMP $4200
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     const cycle_count = try cpu.step();
     try expectEqual(3, cycle_count);
@@ -312,16 +312,16 @@ test "BCC" {
         0x90, 0x42, // BCC #42
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.flags.carry = true;
     _ = try cpu.step();
-    try expectEqual(0x2002, cpu.pc);
+    try expectEqual(0x6002, cpu.pc);
 
     cpu.flags.carry = false;
     _ = try cpu.step();
-    try expectEqual(0x2046, cpu.pc);
+    try expectEqual(0x6046, cpu.pc);
 }
 
 test "BCS" {
@@ -336,16 +336,16 @@ test "BCS" {
         0xB0, 0x42, // BCS #42
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.flags.carry = false;
     _ = try cpu.step();
-    try expectEqual(0x2002, cpu.pc);
+    try expectEqual(0x6002, cpu.pc);
 
     cpu.flags.carry = true;
     _ = try cpu.step();
-    try expectEqual(0x2046, cpu.pc);
+    try expectEqual(0x6046, cpu.pc);
 }
 
 test "BEQ" {
@@ -360,16 +360,16 @@ test "BEQ" {
         0xF0, 0x42, // BEQ #42
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.flags.zero = false;
     _ = try cpu.step();
-    try expectEqual(0x2002, cpu.pc);
+    try expectEqual(0x6002, cpu.pc);
 
     cpu.flags.zero = true;
     _ = try cpu.step();
-    try expectEqual(0x2046, cpu.pc);
+    try expectEqual(0x6046, cpu.pc);
 }
 
 test "BNE" {
@@ -384,16 +384,16 @@ test "BNE" {
         0xD0, 0x42, // BNE #42
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.flags.zero = true;
     _ = try cpu.step();
-    try expectEqual(0x2002, cpu.pc);
+    try expectEqual(0x6002, cpu.pc);
 
     cpu.flags.zero = false;
     _ = try cpu.step();
-    try expectEqual(0x2046, cpu.pc);
+    try expectEqual(0x6046, cpu.pc);
 }
 
 test "BMI" {
@@ -408,16 +408,16 @@ test "BMI" {
         0x30, 0x42, // BMI #42
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.flags.negative = false;
     _ = try cpu.step();
-    try expectEqual(0x2002, cpu.pc);
+    try expectEqual(0x6002, cpu.pc);
 
     cpu.flags.negative = true;
     _ = try cpu.step();
-    try expectEqual(0x2046, cpu.pc);
+    try expectEqual(0x6046, cpu.pc);
 }
 
 test "BPL" {
@@ -432,16 +432,16 @@ test "BPL" {
         0x10, 0x42, // BPL #42
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.flags.negative = true;
     _ = try cpu.step();
-    try expectEqual(0x2002, cpu.pc);
+    try expectEqual(0x6002, cpu.pc);
 
     cpu.flags.negative = false;
     _ = try cpu.step();
-    try expectEqual(0x2046, cpu.pc);
+    try expectEqual(0x6046, cpu.pc);
 }
 
 test "BVC" {
@@ -456,16 +456,16 @@ test "BVC" {
         0x50, 0x42, // BVC #42
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.flags.overflow = true;
     _ = try cpu.step();
-    try expectEqual(0x2002, cpu.pc);
+    try expectEqual(0x6002, cpu.pc);
 
     cpu.flags.overflow = false;
     _ = try cpu.step();
-    try expectEqual(0x2046, cpu.pc);
+    try expectEqual(0x6046, cpu.pc);
 }
 
 test "BVS" {
@@ -480,16 +480,16 @@ test "BVS" {
         0x70, 0x42, // BVS #42
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.flags.overflow = false;
     _ = try cpu.step();
-    try expectEqual(0x2002, cpu.pc);
+    try expectEqual(0x6002, cpu.pc);
 
     cpu.flags.overflow = true;
     _ = try cpu.step();
-    try expectEqual(0x2046, cpu.pc);
+    try expectEqual(0x6046, cpu.pc);
 }
 
 test "JSR" {
@@ -503,11 +503,11 @@ test "JSR" {
         0x20, 0x00, 0x42, // JSR $4200
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = try cpu.step();
-    try expectEqual(0x2002, cpu.pullWord());
+    try expectEqual(0x6002, cpu.pullWord());
     try expectEqual(0x4200, cpu.pc);
 }
 
@@ -522,8 +522,8 @@ test "RTS" {
         0x60, // RTS ; A value will have been manually pushed to the stack for testing purposes
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
     cpu.pushWord(0x4200);
 
     _ = try cpu.step();
@@ -541,15 +541,15 @@ test "BRK" {
         0x00, // BRK
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
     cpu.flags.carry = true;
 
     cpu.writeWord(0xFFFE, 0x4200);
 
     _ = try cpu.step();
     try expectEqual(0b00110001, cpu.pull());
-    try expectEqual(0x2002, cpu.pullWord());
+    try expectEqual(0x6002, cpu.pullWord());
     try expectEqual(0x4200, cpu.pc);
 }
 
@@ -565,8 +565,8 @@ test "RTI" {
         0x40, // RTI ; Stack initialized already, for testing reasons
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
     cpu.pushWord(0x4200);
     cpu.push(0b10110001);
 

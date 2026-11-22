@@ -6,6 +6,9 @@ const instruction_table = instructions.instruction_table;
 const AddressMode = instructions.AddressMode;
 const OperandType = instructions.OperandType;
 
+const memory = @import("memory");
+const NESMemoryMap = memory.NESMemoryMap;
+
 const CPUFlags = packed struct {
     carry: bool = false,
     zero: bool = false,
@@ -17,12 +20,8 @@ const CPUFlags = packed struct {
     negative: bool = false,
 };
 
-const CPUError = error{
-    IllegalAccess,
-};
-
 pub const CPU = struct {
-    ram: []u8 = &.{},
+    mem: NESMemoryMap = .{},
     a: u8 = 0,
     x: u8 = 0,
     y: u8 = 0,
@@ -34,27 +33,23 @@ pub const CPU = struct {
     /// Initialize the CPU. Requires an allocator so the CPU struct can reserve 64KB of RAM
     pub fn init(allocator: Allocator) !CPU {
         var cpu: CPU = .{};
-        cpu.ram = try allocator.alloc(u8, 65536); // CPU can technically access 64KB, this should be configurable, though.
+        cpu.mem = try NESMemoryMap.init(allocator);
         return cpu;
     }
 
     /// Free the CPU's RAM
     pub fn deinit(self: CPU, allocator: Allocator) void {
-        allocator.free(self.ram);
+        self.mem.deinit(allocator);
     }
 
     /// Loads some code into memory at a specified address, and prepares the CPU to execute said code
-    pub fn loadCode(self: CPU, addr: u16, code: []u8) CPUError!void {
-        if (addr + code.len > 0xfffc) { // FFFC is reserved for address of code. Will add more to this eventually
-            return error.IllegalAccess;
-        }
-
-        @memcpy(self.ram[addr .. addr + code.len], code);
+    pub fn loadCode(self: CPU, addr: u16, code: []u8) !void {
+        try self.mem.writeChunk(addr, code);
         self.writeWord(0xfffc, addr);
     }
 
     /// Runs the instruction the program counter points to, advancing as necessary
-    pub fn step(self: *CPU) CPUError!u8 {
+    pub fn step(self: *CPU) !u8 {
         self.extra_cycles = 0;
         const instr = self.advance();
         const meta = instruction_table[instr];
@@ -67,31 +62,31 @@ pub const CPU = struct {
 
     /// Reads a single byte from the CPU's RAM
     pub fn readByte(self: CPU, addr: u16) u8 {
-        return self.ram[addr];
+        return self.mem.read(addr);
     }
 
     /// Writes a single byte to the CPU's RAM
     pub fn writeByte(self: CPU, addr: u16, byte: u8) void {
-        self.ram[addr] = byte;
+        self.mem.write(addr, byte);
     }
 
     /// Reads a single 16-bit word from the CPU's RAM
     pub fn readWord(self: CPU, addr: u16) u16 {
-        const high: u16 = self.ram[addr + 1];
-        const low: u16 = self.ram[addr];
+        const high: u16 = self.mem.read(addr + 1);
+        const low: u16 = self.mem.read(addr);
         return (high << 8) | low;
     }
 
     /// Writes a single 16-bit word to the CPU's RAM
     pub fn writeWord(self: CPU, addr: u16, word: u16) void {
-        self.ram[addr] = @truncate(word & 0xff);
-        self.ram[addr + 1] = @truncate(word >> 8);
+        self.mem.write(addr, @truncate(word & 0xff));
+        self.mem.write(addr + 1, @truncate(word >> 8));
     }
 
     /// Advances the program counter, returning the previous value it pointed to
     fn advance(self: *CPU) u8 {
         self.pc += 1;
-        return self.ram[self.pc - 1];
+        return self.readByte(self.pc - 1);
     }
 
     /// Advances the program counter 2 bytes, returning the word starting at the previous address
@@ -202,20 +197,6 @@ test "CPU init/deinit doesn't fail" {
     defer cpu.deinit(std.testing.allocator);
 }
 
-test "Read and write bytes" {
-    const gpa = std.testing.allocator;
-    const expectEqual = std.testing.expectEqual;
-
-    const cpu = try CPU.init(gpa);
-    defer cpu.deinit(gpa);
-
-    cpu.writeByte(0x4242, 0x42);
-    cpu.writeByte(0x1234, 0x56);
-
-    try expectEqual(0x42, cpu.readByte(0x4242));
-    try expectEqual(0x56, cpu.readByte(0x1234));
-}
-
 test "Read and write words" {
     const gpa = std.testing.allocator;
     const expectEqual = std.testing.expectEqual;
@@ -241,11 +222,11 @@ test "Loading code" {
         0xA9, 0x42, // LDA #42
     };
 
-    try cpu.loadCode(0x2000, &code);
+    try cpu.loadCode(0x6000, &code);
 
-    try expectEqual(0xa9, cpu.readByte(0x2000));
-    try expectEqual(0x42, cpu.readByte(0x2001));
-    try expectEqual(0x2000, cpu.readWord(0xfffc));
+    try expectEqual(0xa9, cpu.readByte(0x6000));
+    try expectEqual(0x42, cpu.readByte(0x6001));
+    try expectEqual(0x6000, cpu.readWord(0xfffc));
 }
 
 test "Program counter advances" {
@@ -259,8 +240,8 @@ test "Program counter advances" {
         0xA9, 0x42, // LDA #42
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     try expectEqual(0xa9, cpu.advance());
     try expectEqual(0x42, cpu.advance());
@@ -277,8 +258,8 @@ test "Immediate addressing mode" {
         0xA9, 0x42, // LDA #42
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     _ = cpu.advance(); // Go past instruction
     try expectEqual(0x42, cpu.getOperand(.immediate, .value));
@@ -295,8 +276,8 @@ test "Absolute addressing mode" {
         0xAD, 0x00, 0x42, // LDA $4200
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.writeByte(0x4200, 0xaa); // Write the word to be read as the operand
 
@@ -315,8 +296,8 @@ test "Zero-page addressing mode" {
         0xA5, 0x42, // LDA $42
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.writeByte(0x42, 0xaa);
 
@@ -335,8 +316,8 @@ test "Absolute,X addressing mode" {
         0xBD, 0x00, 0x42, // LDA $4200,X
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.x = 0x42;
 
@@ -357,8 +338,8 @@ test "Absolute,Y addressing mode" {
         0xB9, 0x00, 0x42, // LDA $4200,Y
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.x = 0x42;
 
@@ -379,8 +360,8 @@ test "Zero-page,X addressing mode" {
         0xB5, 0x42, // LDA $42,X
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.x = 0x42;
 
@@ -401,8 +382,8 @@ test "Zero-page,Y addressing mode" {
         0xB6, 0x42, // LDX $42,Y
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.y = 0x42;
 
@@ -423,8 +404,8 @@ test "Indirect addressing mode" {
         0x6C, 0x00, 0x42, // JMP ($4200)
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.writeWord(0x4200, 0xaaaa);
 
@@ -443,8 +424,8 @@ test "(Indirect, X) addressing mode" {
         0xA1, 0x42, // LDA ($42,X)
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.x = 0x42;
 
@@ -466,8 +447,8 @@ test "(Indirect),Y addressing mode" {
         0xB1, 0x42, // LDA ($42),Y
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.y = 0x42;
 
@@ -489,8 +470,8 @@ test "Addressing modes can return address" {
         0xAD, 0x00, 0x42, // LDA $4200
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     cpu.writeByte(0x4200, 0xaa); // Write the word to be read as the operand
 

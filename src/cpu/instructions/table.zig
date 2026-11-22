@@ -103,12 +103,12 @@ test "NOP" {
         0xEA, // NOP
     };
 
-    try cpu.loadCode(0x2000, &code);
-    cpu.pc = 0x2000;
+    try cpu.loadCode(0x6000, &code);
+    cpu.pc = 0x6000;
 
     const cycle_count = try cpu.step();
     try expectEqual(2, cycle_count);
-    try expectEqual(0x2001, cpu.pc);
+    try expectEqual(0x6001, cpu.pc);
 }
 
 test {
